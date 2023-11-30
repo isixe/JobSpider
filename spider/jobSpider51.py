@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+
 from log import handlerLogger
 
 logger = handlerLogger.HandlerLogger(filename='spider.log')
@@ -65,19 +66,27 @@ class JobSipder51(object):
         extra = f"&keyword={self.keyword}&pageSize={self.pageSize}&jobArea={self.city}"
         url = self.baseUrl + extra
         web = self.driver_builder()
-        web.get(url)
 
-        time.sleep(2)
-        self.slider_verify(web)
-        time.sleep(3)
+        dataJson = None
+        while (True):
+            try:
+                web.get(url)
 
-        html = web.page_source
-        soup = BeautifulSoup(html, "html.parser")
-        data = soup.find('div').text
+                time.sleep(1)
+                self.slider_verify(web)
+                time.sleep(2)
 
-        dataJson = json.loads(data)
-        dataJson = dataJson['resultbody']['job']['items']
-        web.close()
+                html = web.page_source
+                soup = BeautifulSoup(html, "html.parser")
+                data = soup.find('div').text
+
+                dataJson = json.loads(data)
+                dataJson = dataJson['resultbody']['job']['items']
+                break
+            except:
+                logger.warning("data json sipder failed, waiting for try again")
+            finally:
+                web.close()
         return dataJson
 
     def driver_builder(self):
@@ -139,8 +148,13 @@ class JobSipder51(object):
 
         Finally, perform action          ->   .perform()
         """
-        slider = web.find_element(By.XPATH, '//div[@class="nc_bg"]')
+        slider = web.find_elements(By.XPATH, '//div[@class="nc_bg"]')
 
+        if len(slider) <= 0:
+            logger.warning("slider not found")
+            return
+
+        slider = slider[0]
         action_chains = (ActionChains(web)
                          .move_to_element(slider)
                          .click_and_hold()
@@ -150,6 +164,10 @@ class JobSipder51(object):
 
     def save(self, items: json, type: str):
         """ Iterate through the dictionary to get each item, save each data by specify type.
+
+        Otherwise, the process will try to crawl work requirements and work position.
+        If crawl failed, it is set empty and skip after three retries.
+
         Finally, add column header
         """
         root = os.path.abspath('..')
@@ -170,19 +188,43 @@ class JobSipder51(object):
                 'salary': item['provideSalaryString'],
                 'workYear': item['workYearString'],
                 'degree': item['degreeString'],
-                'jobRequire': item['jobHref'],
+                'jobRequire': '',
                 'companyName': item['fullCompanyName'],
                 'companyType': item['companyTypeString'],
                 'companySize': item['companySizeString'],
+                'workAddress': '',
                 'logo': item['smallHrLogoUrl'],
                 'issueDate': item['issueDateString']
             }
+
+            web = self.driver_builder()
+            count = 3
+            while (count >= 0):
+                try:
+                    web.get(item['jobHref'])
+
+                    time.sleep(1)
+                    self.slider_verify(web)
+                    time.sleep(3)
+
+                    jobRequire = web.find_element(By.XPATH, '//div[@class="bmsg job_msg inbox"]').text
+                    workAddress = web.find_element(By.XPATH, '//div[@class="bmsg inbox"]/p[@class="fp"]').text
+                    jobDetailDict['jobRequire'] = jobRequire
+                    jobDetailDict['workAddress'] = workAddress
+                    break
+                except:
+                    count = count - 1
+                    logger.warning("web element spider failed, waiting for try again. retry count: " + str(count))
+                    break
+                finally:
+                    web.close()
+
             save = save_to[type]
             save(jobDetailDict)
 
         if type == 'csv':
             label = (['职位名称', '标签', '城市', '薪资', '工作年限', '学位要求',
-                      '工作要求', '公司名称', '公司类型', '人数', 'Logo', '发布时间'])
+                      '工作要求', '公司名称', '公司类型', '人数', '工作地址', 'Logo', '发布时间'])
 
             header = pd.read_csv(CSV_FILE_PATH, nrows=0).columns.tolist()
             names, set_header = None, False
