@@ -12,13 +12,13 @@ import json
 import time
 import sqlite3
 import pandas as pd
-from log import handlerLogger
+from log import handler_logger
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
-logger = handlerLogger.HandlerLogger(filename='spider.log')
+logger = handler_logger.HandlerLogger(filename='spider.log')
 
 
 class JobSipder51(object):
@@ -252,7 +252,7 @@ class JobSipder51(object):
         """ Save dict data to sqlite """
         connect = sqlite3.connect(output)
         cursor = connect.cursor()
-        sql_table = ('''CREATE TABLE IF NOT EXISTS `job51` (
+        sqlTable = ('''CREATE TABLE IF NOT EXISTS `job51` (
                   `jobName` VARCHAR(255) NOT NULL,
                   `tags` VARCHAR(255) NULL,
                   `city` VARCHAR(50) NULL,
@@ -286,7 +286,7 @@ class JobSipder51(object):
         );'''
 
         try:
-            cursor.execute(sql_table)
+            cursor.execute(sqlTable)
             cursor.execute(sql, detail)
             connect.commit()
         except:
@@ -304,7 +304,7 @@ def start(args: dict, save_engine: str):
      - save_engine: data storage engine, support for csv or db
     """
     if save_engine not in ['csv', 'db']:
-        return logger.critical("The data storage engine must be 'csv' or 'db'")
+        return logger.error("The data storage engine must be 'csv' or 'db'")
 
     spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], city=args['city'])
     json = spider.get_data_json()
