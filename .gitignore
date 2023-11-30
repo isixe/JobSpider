@@ -1,9 +1,12 @@
-.idea/
-.log
-.csv
+*.idea
+/.idea/*
+*.log
+*.csv
 .env
 .venv
 env/
 venv/
 ENV/
 *.spec
+*.iml
+vcs.xml
