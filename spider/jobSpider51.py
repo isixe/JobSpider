@@ -184,13 +184,15 @@ class JobSipder51(object):
             label = (['职位名称', '标签', '城市', '薪资', '工作年限', '学位要求',
                       '工作要求', '公司名称', '公司类型', '人数', 'Logo', '发布时间'])
 
-            header = pd.read_csv(CSV_FILE_PATH, nrows=0)
-            header = header.columns.tolist()
-
+            header = pd.read_csv(CSV_FILE_PATH, nrows=0).columns.tolist()
+            names, set_header = None, False
             if not set(label).intersection(header):
-                df = pd.read_csv(CSV_FILE_PATH, header=None, names=label)
-                df.drop_duplicates(inplace=True)
-                df.to_csv(CSV_FILE_PATH, index=False)
+                names = label
+                set_header = True
+
+            df = pd.read_csv(CSV_FILE_PATH, header=None, names=names, delimiter=',')
+            df.drop_duplicates(inplace=True)
+            df.to_csv(CSV_FILE_PATH, index=False, header=set_header)
 
     def save_to_csv(self, detail: dict, output: str):
         """ Save json data to csv """
@@ -198,8 +200,6 @@ class JobSipder51(object):
         detail = [v for k, v in enumerate(detail.values())]
         df = pd.DataFrame([detail])
         df.to_csv(output, index=False, header=False, mode='a')
-
-
 
 
 if __name__ == '__main__':
