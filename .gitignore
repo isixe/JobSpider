@@ -1,6 +1,7 @@
 *.idea
 /.idea/*
 *.log
+*.log.*
 *.csv
 .env
 .venv
