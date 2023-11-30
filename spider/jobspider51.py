@@ -3,7 +3,7 @@
 # @Time    : 2023/10/31 10:36
 # @Author  : isixe
 # @Version : python3.10.6
-# @Desc    : job data spider
+# @Desc    : 51job data spider
 
 import os
 import random
@@ -250,6 +250,7 @@ class JobSipder51(object):
 
     def save_to_db(self, detail: dict, output: str):
         """ Save dict data to sqlite """
+
         connect = sqlite3.connect(output)
         cursor = connect.cursor()
         sqlTable = ('''CREATE TABLE IF NOT EXISTS `job51` (
@@ -309,13 +310,3 @@ def start(args: dict, save_engine: str):
     spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], city=args['city'])
     json = spider.get_data_json()
     spider.save(json, save_engine)
-
-
-if __name__ == '__main__':
-    param = {
-        "keyword": "前端",
-        "page": 10,
-        "pageSize": 50,
-        "city": "000000"
-    }
-    start(args=param, save_engine='db')
