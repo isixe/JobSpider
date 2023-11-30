@@ -10,13 +10,13 @@ import random
 import re
 import json
 import time
+import sqlite3
 import pandas as pd
+from log import handlerLogger
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-
-from log import handlerLogger
 
 logger = handlerLogger.HandlerLogger(filename='spider.log')
 
@@ -24,20 +24,24 @@ logger = handlerLogger.HandlerLogger(filename='spider.log')
 class JobSipder51(object):
     """ This crawler is crawled based on the API"""
 
-    def __init__(self, param: dict):
+    def __init__(self, keyword: str, page: int, pageSize: int, city: str):
         """ Init the url param
 
         :Args:
-         - param: Url param dict -> key{'keyword','page','pageSize','city'}
+         - keyword: Search keyword
+         - page: Page number
+         - pageSize: Specify the number of data per page
+         - city: Specify the city to search for
         """
-        self.keyword = param['keyword']
-        self.page = param['page']
-        self.pageSize = param['pageSize']
-        self.city = param['city']
+        self.keyword = keyword
+        self.page = page
+        self.pageSize = pageSize
+        self.city = city
         self.baseUrl = ('https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&function=&industry='
                         '&jobArea2=&landmark=&metro=&salary=&workYear=&degree=&companyType=&companySize=&jobType='
                         '&issueDate=&sortType=0&pageNum=1&requestId=&source=1&accountId=&pageCode=sou%7Csou%7Csoulb')
         self.CSV_FILE = '51job.csv'
+        self.SQLITE_FILE = '51job.db'
         self.create_output_dir()
 
     @staticmethod
@@ -168,14 +172,15 @@ class JobSipder51(object):
         Otherwise, the process will try to crawl work requirements and work position.
         If crawl failed, it is set empty and skip after three retries.
 
-        Finally, add column header
+        Finally, add column header and remove duplicate rows
         """
         root = os.path.abspath('..')
         CSV_FILE_PATH = os.path.join(root, "output/" + self.CSV_FILE)
+        SQLITE_FILE_PATH = os.path.join(root, "output/" + self.SQLITE_FILE)
 
         save_to = {
             'csv': lambda x: self.save_to_csv(x, CSV_FILE_PATH),
-            'db': lambda x: self.save_to_db(x)
+            'db': lambda x: self.save_to_db(x, SQLITE_FILE_PATH)
         }
 
         for key, item in enumerate(items):
@@ -214,7 +219,7 @@ class JobSipder51(object):
                     break
                 except:
                     count = count - 1
-                    logger.warning("web element spider failed, waiting for try again. retry count: " + str(count))
+                    logger.warning("web element spider failed, waiting for try again. retry count: " + str(count + 1))
                     break
                 finally:
                     web.close()
@@ -237,21 +242,80 @@ class JobSipder51(object):
             df.to_csv(CSV_FILE_PATH, index=False, header=set_header)
 
     def save_to_csv(self, detail: dict, output: str):
-        """ Save json data to csv """
+        """ Save dict data to csv """
 
         detail = [v for k, v in enumerate(detail.values())]
         df = pd.DataFrame([detail])
         df.to_csv(output, index=False, header=False, mode='a')
 
+    def save_to_db(self, detail: dict, output: str):
+        """ Save dict data to sqlite """
+        connect = sqlite3.connect(output)
+        cursor = connect.cursor()
+        sql_table = ('''CREATE TABLE IF NOT EXISTS `job51` (
+                  `jobName` VARCHAR(255) NOT NULL,
+                  `tags` VARCHAR(255) NULL,
+                  `city` VARCHAR(50) NULL,
+                  `salary` VARCHAR(255) NULL,
+                  `workYear` VARCHAR(10) NULL,
+                  `degree` VARCHAR(10) NULL,
+                  `jobRequire` VARCHAR(255) NULL,
+                  `companyName` VARCHAR(255) NULL,
+                  `companyType` VARCHAR(255) NULL,
+                  `companySize` VARCHAR(10) NULL,
+                  `workAddress` VARCHAR(255) NULL,
+                  `logo` VARCHAR(255) NULL,
+                  `issueDate` VARCHAR(50) NULL,
+                  PRIMARY KEY (`jobName`,`city`)
+        );''')
+
+        sql = '''INSERT INTO `job51` VALUES(
+            :jobName,
+            :tags,
+            :city,
+            :salary,
+            :workYear,
+            :degree,
+            :jobRequire,
+            :companyName,
+            :companyType,
+            :companySize,
+            :workAddress,
+            :logo,
+            :issueDate
+        );'''
+
+        try:
+            cursor.execute(sql_table)
+            cursor.execute(sql, detail)
+            connect.commit()
+        except:
+            logger.warning("SQL execution failure of SQLite")
+        finally:
+            cursor.close()
+            connect.close()
+
+
+def start(args: dict, save_engine: str):
+    """ spider starter
+
+    :Args:
+     - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'city': str}
+     - save_engine: data storage engine, support for csv or db
+    """
+    if save_engine not in ['csv', 'db']:
+        return logger.critical("The data storage engine must be 'csv' or 'db'")
+
+    spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], city=args['city'])
+    json = spider.get_data_json()
+    spider.save(json, save_engine)
+
 
 if __name__ == '__main__':
     param = {
-        "keyword": "android",
+        "keyword": "前端",
         "page": 10,
         "pageSize": 50,
         "city": "000000"
     }
-
-    spider = JobSipder51(param)
-    json = spider.get_data_json()
-    spider.save(json, 'csv')
+    start(args=param, save_engine='db')
