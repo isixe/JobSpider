@@ -69,16 +69,18 @@ class JobSipder51(object):
 
         extra = f"&keyword={self.keyword}&pageSize={self.pageSize}&jobArea={self.city}"
         url = self.baseUrl + extra
-        web = self.driver_builder()
+        logger.info('Crawling ' + url)
 
+        web = None
         dataJson = None
         while (True):
             try:
+                web = self.driver_builder()
                 web.get(url)
 
                 time.sleep(1)
                 self.slider_verify(web)
-                time.sleep(2)
+                time.sleep(1)
 
                 html = web.page_source
                 soup = BeautifulSoup(html, "html.parser")
@@ -202,15 +204,18 @@ class JobSipder51(object):
                 'issueDate': item['issueDateString']
             }
 
-            web = self.driver_builder()
+            web = None
             count = 3
-            while (count >= 0):
+            while (count > 0):
                 try:
-                    web.get(item['jobHref'])
+                    web = self.driver_builder()
+                    url = item['jobHref']
+                    logger.info('Crawling ' + url)
+                    web.get(url)
 
                     time.sleep(1)
                     self.slider_verify(web)
-                    time.sleep(3)
+                    time.sleep(2)
 
                     jobRequire = web.find_element(By.XPATH, '//div[@class="bmsg job_msg inbox"]').text
                     workAddress = web.find_element(By.XPATH, '//div[@class="bmsg inbox"]/p[@class="fp"]').text
@@ -219,8 +224,7 @@ class JobSipder51(object):
                     break
                 except:
                     count = count - 1
-                    logger.warning("web element spider failed, waiting for try again. retry count: " + str(count + 1))
-                    break
+                    logger.warning("web element spider failed, waiting for try again. retry count: " + str(count))
                 finally:
                     web.close()
 
