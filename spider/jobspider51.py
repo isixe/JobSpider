@@ -206,11 +206,11 @@ class JobSipder51(object):
 
             web = None
             count = 3
+            url = item['jobHref']
+            logger.info('Crawling ' + url)
             while (count > 0):
                 try:
                     web = self.driver_builder()
-                    url = item['jobHref']
-                    logger.info('Crawling ' + url)
                     web.get(url)
 
                     time.sleep(1)
