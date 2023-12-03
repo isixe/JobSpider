@@ -71,11 +71,9 @@ class JobSipder51(object):
         url = self.baseUrl + extra
         logger.info('Crawling ' + url)
 
-        web = None
-        dataJson = None
+        web = self.driver_builder()
         while (True):
             try:
-                web = self.driver_builder()
                 web.get(url)
 
                 time.sleep(1)
@@ -91,8 +89,8 @@ class JobSipder51(object):
                 break
             except:
                 logger.warning("data json sipder failed, waiting for try again")
-            finally:
-                web.close()
+
+        web.close()
         return dataJson
 
     def driver_builder(self):
@@ -182,7 +180,9 @@ class JobSipder51(object):
 
         save_to = {
             'csv': lambda x: self.save_to_csv(x, CSV_FILE_PATH),
-            'db': lambda x: self.save_to_db(x, SQLITE_FILE_PATH)
+            'db': lambda x: self.save_to_db(x, SQLITE_FILE_PATH),
+            'both': lambda x: (self.save_to_csv(x, CSV_FILE_PATH),
+                               self.save_to_db(x, SQLITE_FILE_PATH))
         }
 
         for key, item in enumerate(items):
@@ -204,13 +204,14 @@ class JobSipder51(object):
                 'issueDate': item['issueDateString']
             }
 
-            web = None
             count = 3
             url = item['jobHref']
             logger.info('Crawling ' + url)
+
+            web = self.driver_builder()
             while (count > 0):
                 try:
-                    web = self.driver_builder()
+                    time.sleep(random.randint(1, 3))
                     web.get(url)
 
                     time.sleep(1)
@@ -225,9 +226,8 @@ class JobSipder51(object):
                 except:
                     count = count - 1
                     logger.warning("web element spider failed, waiting for try again. retry count: " + str(count))
-                finally:
-                    web.close()
 
+            web.close()
             save = save_to[type]
             save(jobDetailDict)
 
@@ -306,10 +306,10 @@ def start(args: dict, save_engine: str):
 
     :Args:
      - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'city': str}
-     - save_engine: data storage engine, support for csv or db
+     - save_engine: data storage engine, support for csv, db and both
     """
-    if save_engine not in ['csv', 'db']:
-        return logger.error("The data storage engine must be 'csv' or 'db'")
+    if save_engine not in ['csv', 'db', 'both']:
+        return logger.error("The data storage engine must be 'csv' , 'db' or 'both' ")
 
     spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], city=args['city'])
     json = spider.get_data_json()
