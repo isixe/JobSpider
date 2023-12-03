@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.proxy import ProxyType, Proxy
 
 logger = handler_logger.HandlerLogger(filename='spider.log')
 
@@ -76,9 +77,9 @@ class JobSipder51(object):
             try:
                 web.get(url)
 
-                time.sleep(1)
+                time.sleep(random.uniform(0.5, 1))
                 self.slider_verify(web)
-                time.sleep(1)
+                time.sleep(random.uniform(0.5, 1))
 
                 html = web.page_source
                 soup = BeautifulSoup(html, "html.parser")
@@ -211,12 +212,12 @@ class JobSipder51(object):
             web = self.driver_builder()
             while (count > 0):
                 try:
-                    time.sleep(random.randint(1, 3))
+                    time.sleep(random.uniform(2, 10))
                     web.get(url)
 
-                    time.sleep(1)
+                    time.sleep(random.uniform(0.5, 1))
                     self.slider_verify(web)
-                    time.sleep(2)
+                    time.sleep(random.uniform(0.5, 1))
 
                     jobRequire = web.find_element(By.XPATH, '//div[@class="bmsg job_msg inbox"]').text
                     workAddress = web.find_element(By.XPATH, '//div[@class="bmsg inbox"]/p[@class="fp"]').text
@@ -226,6 +227,7 @@ class JobSipder51(object):
                 except:
                     count = count - 1
                     logger.warning("web element spider failed, waiting for try again. retry count: " + str(count))
+                    time.sleep(random.uniform(0, 5))
 
             web.close()
             save = save_to[type]
