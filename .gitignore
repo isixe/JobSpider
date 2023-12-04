@@ -11,3 +11,5 @@ ENV/
 *.spec
 *.iml
 vcs.xml
+__pycache__
+/__pycache__/*
