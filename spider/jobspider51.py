@@ -15,9 +15,9 @@ import pandas as pd
 from log import handler_logger
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from fake_useragent import UserAgent
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.proxy import ProxyType, Proxy
 
 logger = handler_logger.HandlerLogger(filename='spider.log')
 
@@ -38,9 +38,9 @@ class JobSipder51(object):
         self.page = page
         self.pageSize = pageSize
         self.city = city
-        self.baseUrl = ('https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&function=&industry='
-                        '&jobArea2=&landmark=&metro=&salary=&workYear=&degree=&companyType=&companySize=&jobType='
-                        '&issueDate=&sortType=0&pageNum=1&requestId=&source=1&accountId=&pageCode=sou%7Csou%7Csoulb')
+        self.baseUrl = ('https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb'
+                        '&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId=')
+        self.fakeUrl = '&jobArea2=&jobType=&salary=&workYear=&degree=&companyType=&companySize=&issueDate='
         self.CSV_FILE = '51job.csv'
         self.SQLITE_FILE = '51job.db'
         self.create_output_dir()
@@ -68,18 +68,24 @@ class JobSipder51(object):
         Finally, return json data
         """
 
-        extra = f"&keyword={self.keyword}&pageSize={self.pageSize}&jobArea={self.city}"
-        url = self.baseUrl + extra
+        extra = f"&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.city}"
+        fake = self.fakeUrl.split('&')
+        fake.remove(random.choice(fake))
+        fake = '&'.join(fake)
+
+        url = self.baseUrl + extra + fake
+        logger.info('Crawling page ' + str(self.page))
         logger.info('Crawling ' + url)
 
         web = self.driver_builder()
         while (True):
             try:
+                time.sleep(random.uniform(5, 10))
                 web.get(url)
 
-                time.sleep(random.uniform(0.5, 1))
+                time.sleep(random.uniform(1, 2))
                 self.slider_verify(web)
-                time.sleep(random.uniform(0.5, 1))
+                time.sleep(random.uniform(1, 2))
 
                 html = web.page_source
                 soup = BeautifulSoup(html, "html.parser")
@@ -115,6 +121,9 @@ class JobSipder51(object):
             .add_argument('--disable-blink-features=AutomationControlled')
             -> Disable auto control extension of the browser
 
+            .add_argument(f'user-agent={user_agent}')
+            -> Add random UA
+
         Additionally, if use the visible window execution, you need to add the following operations
 
             .add_argument('--inprivate')
@@ -125,6 +134,7 @@ class JobSipder51(object):
 
         Finally, inject script to change navigator = false.
         """
+        user_agent = UserAgent().random
 
         options = webdriver.EdgeOptions()
         options.add_argument('headless')
@@ -133,6 +143,8 @@ class JobSipder51(object):
         options.add_experimental_option('excludeSwitches', ['enable-automation', 'enable-logging'])
         options.add_argument('--disable-blink-features=AutomationControlled')
         options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument(f'user-agent={user_agent}')
+
         # options.add_argument('--inprivate')
         # options.add_argument("--start-maximized")
 
@@ -196,46 +208,18 @@ class JobSipder51(object):
                 'salary': item['provideSalaryString'],
                 'workYear': item['workYearString'],
                 'degree': item['degreeString'],
-                'jobRequire': '',
                 'companyName': item['fullCompanyName'],
                 'companyType': item['companyTypeString'],
                 'companySize': item['companySizeString'],
-                'workAddress': '',
-                'logo': item['smallHrLogoUrl'],
+                'logo': item['companyLogo'],
                 'issueDate': item['issueDateString']
             }
-
-            count = 3
-            url = item['jobHref']
-            logger.info('Crawling ' + url)
-
-            web = self.driver_builder()
-            while (count > 0):
-                try:
-                    time.sleep(random.uniform(2, 10))
-                    web.get(url)
-
-                    time.sleep(random.uniform(0.5, 1))
-                    self.slider_verify(web)
-                    time.sleep(random.uniform(0.5, 1))
-
-                    jobRequire = web.find_element(By.XPATH, '//div[@class="bmsg job_msg inbox"]').text
-                    workAddress = web.find_element(By.XPATH, '//div[@class="bmsg inbox"]/p[@class="fp"]').text
-                    jobDetailDict['jobRequire'] = jobRequire
-                    jobDetailDict['workAddress'] = workAddress
-                    break
-                except:
-                    count = count - 1
-                    logger.warning("web element spider failed, waiting for try again. retry count: " + str(count))
-                    time.sleep(random.uniform(0, 5))
-
-            web.close()
             save = save_to[type]
             save(jobDetailDict)
 
-        if type == 'csv':
+        if type in ['csv', 'both']:
             label = (['职位名称', '标签', '城市', '薪资', '工作年限', '学位要求',
-                      '工作要求', '公司名称', '公司类型', '人数', '工作地址', 'Logo', '发布时间'])
+                      '公司名称', '公司类型', '人数', 'Logo', '发布时间'])
 
             header = pd.read_csv(CSV_FILE_PATH, nrows=0).columns.tolist()
             names, set_header = None, False
@@ -266,14 +250,12 @@ class JobSipder51(object):
                   `salary` VARCHAR(255) NULL,
                   `workYear` VARCHAR(10) NULL,
                   `degree` VARCHAR(10) NULL,
-                  `jobRequire` VARCHAR(255) NULL,
                   `companyName` VARCHAR(255) NULL,
                   `companyType` VARCHAR(255) NULL,
                   `companySize` VARCHAR(10) NULL,
-                  `workAddress` VARCHAR(255) NULL,
                   `logo` VARCHAR(255) NULL,
                   `issueDate` VARCHAR(50) NULL,
-                  PRIMARY KEY (`jobName`,`city`)
+                  PRIMARY KEY (`jobName`,`city`,`companyName`,`issueDate`)
         );''')
 
         sql = '''INSERT INTO `job51` VALUES(
@@ -283,11 +265,9 @@ class JobSipder51(object):
             :salary,
             :workYear,
             :degree,
-            :jobRequire,
             :companyName,
             :companyType,
             :companySize,
-            :workAddress,
             :logo,
             :issueDate
         );'''
@@ -296,8 +276,8 @@ class JobSipder51(object):
             cursor.execute(sqlTable)
             cursor.execute(sql, detail)
             connect.commit()
-        except:
-            logger.warning("SQL execution failure of SQLite")
+        except Exception as e:
+            logger.warning("SQL execution failure of SQLite: " + str(e))
         finally:
             cursor.close()
             connect.close()
