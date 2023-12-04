@@ -8,11 +8,10 @@
 from spider import jobspider51
 
 if __name__ == '__main__':
-    for i in range(0, 10):
-        param = {
-            "keyword": "前端",
-            "page": i + 1,
-            "pageSize": 50,
-            "city": "000000"
-        }
-        jobspider51.start(args=param, save_engine='db')
+    param = {
+        "keyword": "Python",
+        "page": 1,
+        "pageSize": 1000,
+        "city": "000000"
+    }
+    jobspider51.start(args=param, save_engine='both')

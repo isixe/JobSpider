@@ -64,7 +64,7 @@ class HandlerLogger:
 
         current_dir = os.path.dirname(__file__)
         abs_dir = os.path.join(current_dir, filename)
-        handler = RotatingFileHandler(filename=abs_dir, maxBytes=2048, encoding='utf-8', backupCount=1)
+        handler = RotatingFileHandler(filename=abs_dir, maxBytes=2048, encoding='utf-8', backupCount=3)
         return handler
 
     @staticmethod
