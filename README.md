@@ -1,6 +1,6 @@
 # JobSpider
 
-Python 基于 Selenium 爬取招聘岗位信息的基础程序
+Python 基于 Selenium 爬取招聘岗位信息的基础程序，支持 CSV 和 SQLite 数据存储
 
 # 支持
 
@@ -50,3 +50,7 @@ pip install requirements.txt
 └─test 
   └─spider_test.py 
 ```
+
+# 声明
+> [!WARNING]
+> 该程序仅用于学习研究，请勿用于任何商业或非法目的，若违反规定请自行对此负责，本人对此概不承担任何责任。
