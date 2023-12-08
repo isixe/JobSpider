@@ -20,6 +20,7 @@ colorlog==6.8.0
 fake-useragent==1.4.0
 pandas==2.1.3
 selenium==4.15.2
+requests==2.31.0
 ```
 
 # 运行
@@ -42,10 +43,16 @@ pip install requirements.txt
 │ └─__init__.py 
 ├─output 
 │ ├─51job.csv 
-│ └─51job.db 
+│ ├─51job.db 
+│ └─area 
+│  ├─51area.csv 
+│  └─51area.db  
 ├─spider 
 │ ├─jobspider51.py 
-│ └─__init__.py 
+│ ├─__init__.py 
+│ └─area 
+│  ├─areaspider51.py
+│  └─__init__.py 
 └─test 
   └─spider_test.py 
 ```
