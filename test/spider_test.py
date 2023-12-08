@@ -10,7 +10,7 @@ from spider.city import areaspider51
 
 
 def area():
-    areaspider51.start('both')
+    areaspider51.start(save_engine='both')
 
 
 def job():
