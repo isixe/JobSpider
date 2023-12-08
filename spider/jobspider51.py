@@ -38,6 +38,7 @@ class JobSipder51(object):
         self.page = page
         self.pageSize = pageSize
         self.city = city
+        self.timestamp = str(int(time.time()))
         self.baseUrl = ('https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb'
                         '&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId=')
         self.fakeUrl = '&jobArea2=&jobType=&salary=&workYear=&degree=&companyType=&companySize=&issueDate='
@@ -48,6 +49,7 @@ class JobSipder51(object):
     @staticmethod
     def create_output_dir():
         """ Create output directory if not exists """
+
         root = os.path.abspath('..')
 
         directory = os.path.join(root, "output")
@@ -67,8 +69,7 @@ class JobSipder51(object):
 
         Finally, return json data
         """
-
-        extra = f"&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.city}"
+        extra = f"&timestamp={self.timestamp}&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.city}"
         fake = self.fakeUrl.split('&')
         fake.remove(random.choice(fake))
         fake = '&'.join(fake)
@@ -164,6 +165,9 @@ class JobSipder51(object):
             3. move to target position   ->   .move_by_offset(300, 0)
 
         Finally, perform action          ->   .perform()
+
+        :Args:
+         - web: Browser webdriver
         """
         slider = web.find_elements(By.XPATH, '//div[@class="nc_bg"]')
 
@@ -186,6 +190,10 @@ class JobSipder51(object):
         If crawl failed, it is set empty and skip after three retries.
 
         Finally, add column header and remove duplicate rows
+
+        :Args:
+         - item: JSON data list
+         - type: Data storage engine, support for csv, db and both
         """
         root = os.path.abspath('..')
         CSV_FILE_PATH = os.path.join(root, "output/" + self.CSV_FILE)
@@ -232,15 +240,22 @@ class JobSipder51(object):
             df.to_csv(CSV_FILE_PATH, index=False, header=set_header)
 
     def save_to_csv(self, detail: dict, output: str):
-        """ Save dict data to csv """
+        """ Save dict data to csv
 
+        :Arg:
+         - detail: Dictionary of a single data
+         - output: Data output path
+        """
         detail = [v for k, v in enumerate(detail.values())]
         df = pd.DataFrame([detail])
         df.to_csv(output, index=False, header=False, mode='a')
 
     def save_to_db(self, detail: dict, output: str):
-        """ Save dict data to sqlite """
+        """ Save dict data to sqlite
 
+        :Arg:
+         - output: Data output path
+        """
         connect = sqlite3.connect(output)
         cursor = connect.cursor()
         sqlTable = ('''CREATE TABLE IF NOT EXISTS `job51` (
@@ -288,7 +303,7 @@ def start(args: dict, save_engine: str):
 
     :Args:
      - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'city': str}
-     - save_engine: data storage engine, support for csv, db and both
+     - save_engine: Data storage engine, support for csv, db and both
     """
     if save_engine not in ['csv', 'db', 'both']:
         return logger.error("The data storage engine must be 'csv' , 'db' or 'both' ")
