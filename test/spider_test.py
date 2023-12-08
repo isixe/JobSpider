@@ -13,16 +13,16 @@ def area():
     areaspider51.start(save_engine='both')
 
 
-# def job():
-#     param = {
-#         "keyword": "Python",
-#         "page": 1,
-#         "pageSize": 1000,
-#         "city": "000000"
-#     }
-#     jobspider51.start(args=param, save_engine='both')
+def job():
+    param = {
+        "keyword": "Python",
+        "page": 1,
+        "pageSize": 1000,
+        "area": "000000"
+    }
+    jobspider51.start(args=param, save_engine='both')
 
 
 if __name__ == '__main__':
     area()
-    # job()
+    job()
