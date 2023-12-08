@@ -19,6 +19,7 @@ from fake_useragent import UserAgent
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
+
 class JobSipder51(object):
     """ This crawler is crawled based on the API"""
 
@@ -76,7 +77,9 @@ class JobSipder51(object):
         logger.info('Crawling ' + url)
 
         web = self.driver_builder()
-        while (True):
+        count = 3
+        dataJson = None
+        while (count > 0):
             try:
                 time.sleep(random.uniform(5, 10))
                 web.get(url)
@@ -93,7 +96,9 @@ class JobSipder51(object):
                 dataJson = dataJson['resultbody']['job']['items']
                 break
             except:
-                logger.warning("data json sipder failed, waiting for try again")
+                count = count - 1
+                logger.warning("data json sipder failed, waiting for try again, Remaining retry attempts: "
+                               + str(count))
 
         web.close()
         return dataJson
@@ -306,5 +311,7 @@ def start(args: dict, save_engine: str):
         return logger.error("The data storage engine must be 'csv' , 'db' or 'both' ")
 
     spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], area=args['area'])
-    json = spider.get_data_json()
-    spider.save(json, save_engine)
+    data_json = spider.get_data_json()
+    logger.info(data_json)
+    if data_json is not None:
+        spider.save(data_json, save_engine)
