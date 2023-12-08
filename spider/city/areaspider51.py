@@ -109,6 +109,8 @@ class AreaSpider51(object):
         """
         connect = sqlite3.connect(output)
         cursor = connect.cursor()
+        sqlClean = '''DROP TABLE IF EXISTS `area51`;'''
+
         sqlTable = ('''CREATE TABLE IF NOT EXISTS `area51` (
                   `code` VARCHAR(10) NOT NULL,
                   `area` VARCHAR(10) NOT NULL,
@@ -118,6 +120,7 @@ class AreaSpider51(object):
         sql = '''INSERT INTO `area51` VALUES(?, ?);'''
 
         try:
+            cursor.execute(sqlClean)
             cursor.execute(sqlTable)
             cursor.executemany(sql, data)
             connect.commit()
