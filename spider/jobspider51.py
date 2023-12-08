@@ -12,15 +12,12 @@ import json
 import time
 import sqlite3
 import pandas as pd
-from log import handler_logger
+from spider import logger
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from fake_useragent import UserAgent
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-
-logger = handler_logger.HandlerLogger(filename='spider.log')
-
 
 class JobSipder51(object):
     """ This crawler is crawled based on the API"""

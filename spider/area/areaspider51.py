@@ -8,13 +8,10 @@
 import os
 import re
 import sqlite3
-import pandas as pd
 import requests
+import pandas as pd
+from spider import logger
 from fake_useragent import UserAgent
-from log import handler_logger
-
-logger = handler_logger.HandlerLogger(filename='spider.log')
-
 
 class AreaSpider51(object):
     """ This crawler is crawled based on the API"""
