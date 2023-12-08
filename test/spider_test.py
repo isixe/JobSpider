@@ -6,7 +6,7 @@
 # @Desc    : base spider test
 
 from spider import jobspider51
-from spider.city import areaspider51
+from spider.area import areaspider51
 
 
 def area():
