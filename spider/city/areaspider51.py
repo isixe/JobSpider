@@ -27,8 +27,8 @@ class AreaSpider51(object):
         self.headers = {
             'User-Agent': self.user_agent,
         }
-        self.CSV_FILE = '51city.csv'
-        self.SQLITE_FILE = '51city.db'
+        self.CSV_FILE = '51area.csv'
+        self.SQLITE_FILE = '51area.db'
         self.create_output_dir()
 
     def get_data_list(self):
@@ -52,19 +52,19 @@ class AreaSpider51(object):
         end = request.find(']', start)
         allProvince = request[start:end + 1]
         data = (hotcity + allProvince).replace("][", ",")
-        cityList = data[1:-1]
+        areaList = data[1:-1]
 
         pattern = r'{k:"(.*?)",v:"(.*?)"}'
-        cityTupleList = re.findall(pattern, cityList)
-        cityTupleList.pop(0)
-        return cityTupleList
+        areaTupleList = re.findall(pattern, areaList)
+        areaTupleList.pop(0)
+        return areaTupleList
 
     @staticmethod
     def create_output_dir():
         """ Create output directory if not exists """
 
-        root = os.path.abspath('../..')
-        directory = os.path.join(root, "output/city")
+        root = os.path.abspath('..')
+        directory = os.path.join(root, "output/area")
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -76,9 +76,9 @@ class AreaSpider51(object):
          - type: Data storage engine, support for csv, db and both
         """
 
-        root = os.path.abspath('../..')
-        CSV_FILE_PATH = os.path.join(root, "output/city/" + self.CSV_FILE)
-        SQLITE_FILE_PATH = os.path.join(root, "output/city/" + self.SQLITE_FILE)
+        root = os.path.abspath('..')
+        CSV_FILE_PATH = os.path.join(root, "output/area/" + self.CSV_FILE)
+        SQLITE_FILE_PATH = os.path.join(root, "output/area/" + self.SQLITE_FILE)
 
         save_to = {
             'csv': lambda x: self.save_to_csv(x, CSV_FILE_PATH),
@@ -132,7 +132,7 @@ def start(save_engine: str):
     """ spider starter
 
     :Arg:
-     - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'city': str}
+     - save_engine: Data storage engine, support for csv, db and both
     """
     if save_engine not in ['csv', 'db', 'both']:
         return logger.error("The data storage engine must be 'csv' , 'db' or 'both' ")
