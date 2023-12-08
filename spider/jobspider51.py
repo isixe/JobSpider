@@ -25,19 +25,19 @@ logger = handler_logger.HandlerLogger(filename='spider.log')
 class JobSipder51(object):
     """ This crawler is crawled based on the API"""
 
-    def __init__(self, keyword: str, page: int, pageSize: int, city: str):
+    def __init__(self, keyword: str, page: int, pageSize: int, area: str):
         """ Init the url param
 
         :Args:
          - keyword: Search keyword
          - page: Page number
          - pageSize: Specify the number of data per page
-         - city: Specify the city to search for
+         - area: Specify the area to search for
         """
         self.keyword = keyword
         self.page = page
         self.pageSize = pageSize
-        self.city = city
+        self.area = area
         self.timestamp = str(int(time.time()))
         self.baseUrl = ('https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb'
                         '&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId=')
@@ -69,7 +69,7 @@ class JobSipder51(object):
 
         Finally, return json data
         """
-        extra = f"&timestamp={self.timestamp}&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.city}"
+        extra = f"&timestamp={self.timestamp}&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.area}"
         fake = self.fakeUrl.split('&')
         fake.remove(random.choice(fake))
         fake = '&'.join(fake)
@@ -212,7 +212,7 @@ class JobSipder51(object):
             jobDetailDict = {
                 'jobName': item['jobName'],
                 'tags': ",".join(item['jobTags']),
-                'city': ''.join(re.findall(r'[\u4e00-\u9fa5]+', str(item['jobAreaLevelDetail']))),
+                'area': ''.join(re.findall(r'[\u4e00-\u9fa5]+', str(item['jobAreaLevelDetail']))),
                 'salary': item['provideSalaryString'],
                 'workYear': item['workYearString'],
                 'degree': item['degreeString'],
@@ -261,7 +261,7 @@ class JobSipder51(object):
         sqlTable = ('''CREATE TABLE IF NOT EXISTS `job51` (
                   `jobName` VARCHAR(255) NOT NULL,
                   `tags` VARCHAR(255) NULL,
-                  `city` VARCHAR(50) NULL,
+                  `area` VARCHAR(50) NULL,
                   `salary` VARCHAR(255) NULL,
                   `workYear` VARCHAR(10) NULL,
                   `degree` VARCHAR(10) NULL,
@@ -270,13 +270,13 @@ class JobSipder51(object):
                   `companySize` VARCHAR(10) NULL,
                   `logo` VARCHAR(255) NULL,
                   `issueDate` VARCHAR(50) NULL,
-                  PRIMARY KEY (`jobName`,`city`,`companyName`,`issueDate`)
+                  PRIMARY KEY (`jobName`,`area`,`companyName`,`issueDate`)
         );''')
 
         sql = '''INSERT INTO `job51` VALUES(
             :jobName,
             :tags,
-            :city,
+            :area,
             :salary,
             :workYear,
             :degree,
@@ -302,12 +302,12 @@ def start(args: dict, save_engine: str):
     """ spider starter
 
     :Args:
-     - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'city': str}
+     - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'area': str}
      - save_engine: Data storage engine, support for csv, db and both
     """
     if save_engine not in ['csv', 'db', 'both']:
         return logger.error("The data storage engine must be 'csv' , 'db' or 'both' ")
 
-    spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], city=args['city'])
+    spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], area=args['area'])
     json = spider.get_data_json()
     spider.save(json, save_engine)
