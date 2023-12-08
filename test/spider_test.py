@@ -3,11 +3,17 @@
 # @Time    : 2023/11/30 21:49
 # @Author  : Exisi
 # @Version : python3.10.6
-# @Desc    : $END$
+# @Desc    : base spider test
 
 from spider import jobspider51
+from spider.city import areaspider51
 
-if __name__ == '__main__':
+
+def area():
+    areaspider51.start('both')
+
+
+def job():
     param = {
         "keyword": "Python",
         "page": 1,
@@ -15,3 +21,8 @@ if __name__ == '__main__':
         "city": "000000"
     }
     jobspider51.start(args=param, save_engine='both')
+
+
+if __name__ == '__main__':
+    area()
+    job()
