@@ -93,6 +93,12 @@ class JobSipder51(object):
                 data = soup.find('div').text
 
                 dataJson = json.loads(data)
+
+                if dataJson['status'] != '1':
+                    logger.warning('Request failed, the request is unavailable')
+                    dataJson = None
+                    break
+
                 dataJson = dataJson['resultbody']['job']['items']
                 break
             except:
@@ -197,6 +203,9 @@ class JobSipder51(object):
          - item: JSON data list
          - type: Data storage engine, support for csv, db and both
         """
+        if items is None:
+            return
+
         root = os.path.abspath('..')
         CSV_FILE_PATH = os.path.join(root, "output/" + self.CSV_FILE)
         SQLITE_FILE_PATH = os.path.join(root, "output/" + self.SQLITE_FILE)
@@ -209,8 +218,6 @@ class JobSipder51(object):
         }
 
         for key, item in enumerate(items):
-            logger.info('processing in item' + str(key + 1))
-
             jobDetailDict = {
                 'jobName': item['jobName'],
                 'tags': ",".join(item['jobTags']),
@@ -312,6 +319,4 @@ def start(args: dict, save_engine: str):
 
     spider = JobSipder51(keyword=args['keyword'], page=args['page'], pageSize=args['pageSize'], area=args['area'])
     data_json = spider.get_data_json()
-    logger.info(data_json)
-    if data_json is not None:
-        spider.save(data_json, save_engine)
+    spider.save(data_json, save_engine)
