@@ -218,6 +218,8 @@ class JobSipder51(object):
         }
 
         for key, item in enumerate(items):
+            logger.info('processing in item' + str(key + 1))
+
             jobDetailDict = {
                 'jobName': item['jobName'],
                 'tags': ",".join(item['jobTags']),
