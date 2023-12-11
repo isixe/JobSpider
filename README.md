@@ -42,11 +42,12 @@ pip install requirements.txt
 │ ├─handler_logger.py 
 │ └─__init__.py 
 ├─output 
-│ ├─51job.csv 
-│ ├─51job.db 
-│ └─area 
-│  ├─51area.csv 
-│  └─51area.db  
+│ ├─area 
+│ │ ├─51area.csv 
+│ │ └─51area.db  
+│ └─job 
+│   ├─51job.csv 
+│   └─51job.db   
 ├─spider 
 │ ├─jobspider51.py 
 │ ├─__init__.py 
