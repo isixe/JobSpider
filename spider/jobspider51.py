@@ -45,10 +45,10 @@ class JobSipder51(object):
         self.SQLITE_FILE = '51job.db'
         self.CSV_FILE_PATH = os.path.join(self.root, "output/job/" + self.CSV_FILE)
         self.SQLITE_FILE_PATH = os.path.join(self.root, "output/job/" + self.SQLITE_FILE)
-        self.create_output_dir()
+        self.__create_output_dir()
 
     @staticmethod
-    def create_output_dir():
+    def __create_output_dir():
         """ Create output directory if not exists """
 
         root = os.path.abspath('..')
@@ -57,62 +57,7 @@ class JobSipder51(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def get_data_json(self):
-        """ Get job JSON data
-
-        The following is the execution order
-
-            Driver building and start url
-            Passing slider verification
-            Getting HTML source
-            Parsing HTML by BeautifulSoup, obtain the data through the first div
-            Json Parsing
-
-        Finally, return json data
-        """
-        extra = f"&timestamp={self.timestamp}&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.area}"
-        fake = self.fakeUrl.split('&')
-        fake.remove(random.choice(fake))
-        fake = '&'.join(fake)
-
-        url = self.baseUrl + extra + fake
-        logger.info('Crawling page ' + str(self.page))
-        logger.info('Crawling ' + url)
-
-        web = self.driver_builder()
-        count = 3
-        dataJson = None
-        while (count > 0):
-            try:
-                time.sleep(random.uniform(5, 10))
-                web.get(url)
-
-                time.sleep(random.uniform(1, 2))
-                self.slider_verify(web)
-                time.sleep(random.uniform(1, 2))
-
-                html = web.page_source
-                soup = BeautifulSoup(html, "html.parser")
-                data = soup.find('div').text
-
-                dataJson = json.loads(data)
-
-                if dataJson['status'] != '1':
-                    logger.warning('Request failed, the request is unavailable')
-                    dataJson = None
-                    break
-
-                dataJson = dataJson['resultbody']['job']['items']
-                break
-            except:
-                count = count - 1
-                logger.warning("data json sipder failed, waiting for try again, Remaining retry attempts: "
-                               + str(count))
-
-        web.close()
-        return dataJson
-
-    def driver_builder(self):
+    def __driver_builder(self):
         """ Init webdriver
 
         During the building process, it is necessary to set up an anti crawler detection strategy by Option.
@@ -166,7 +111,7 @@ class JobSipder51(object):
         web.execute_script(script)
         return web
 
-    def slider_verify(self, web: webdriver):
+    def __slider_verify(self, web: webdriver):
         """ Slider verification action
 
         This requires the mouse to perform the following operations in following order
@@ -194,62 +139,7 @@ class JobSipder51(object):
 
         action_chains.perform()
 
-    def save(self, items: json, type: str):
-        """ Iterate through the dictionary to get each item, save each data by specify type.
-
-        Otherwise, the process will try to crawl work requirements and work position.
-        If crawl failed, it is set empty and skip after three retries.
-
-        Finally, add column header and remove duplicate rows
-
-        :Args:
-         - item: JSON data list
-         - type: Data storage engine, support for csv, db and both
-        """
-        if items is None:
-            return
-
-        save_to = {
-            'csv': lambda x: self.save_to_csv(x, self.CSV_FILE_PATH),
-            'db': lambda x: self.save_to_db(x, self.SQLITE_FILE_PATH),
-            'both': lambda x: (self.save_to_csv(x, self.CSV_FILE_PATH),
-                               self.save_to_db(x, self.SQLITE_FILE_PATH))
-        }
-
-        for key, item in enumerate(items):
-            logger.info('processing in item' + str(key + 1))
-
-            jobDetailDict = {
-                'jobName': item['jobName'],
-                'tags': ",".join(item['jobTags']),
-                'area': ''.join(re.findall(r'[\u4e00-\u9fa5]+', str(item['jobAreaLevelDetail']))),
-                'salary': item['provideSalaryString'],
-                'workYear': item['workYearString'],
-                'degree': item['degreeString'],
-                'companyName': item['fullCompanyName'],
-                'companyType': item['companyTypeString'],
-                'companySize': item['companySizeString'],
-                'logo': item['companyLogo'],
-                'issueDate': item['issueDateString']
-            }
-            save = save_to[type]
-            save(jobDetailDict)
-
-        if type in ['csv', 'both']:
-            label = (['职位名称', '标签', '城市', '薪资', '工作年限', '学位要求',
-                      '公司名称', '公司类型', '人数', 'Logo', '发布时间'])
-
-            header = pd.read_csv(self.CSV_FILE_PATH, nrows=0).columns.tolist()
-            names, set_header = None, False
-            if not set(label).intersection(header):
-                names = label
-                set_header = True
-
-            df = pd.read_csv(self.CSV_FILE_PATH, header=None, names=names, delimiter=',')
-            df.drop_duplicates(inplace=True)
-            df.to_csv(self.CSV_FILE_PATH, index=False, header=set_header)
-
-    def save_to_csv(self, detail: dict, output: str):
+    def __save_to_csv(self, detail: dict, output: str):
         """ Save dict data to csv
 
         :Arg:
@@ -260,7 +150,7 @@ class JobSipder51(object):
         df = pd.DataFrame([detail])
         df.to_csv(output, index=False, header=False, mode='a')
 
-    def save_to_db(self, detail: dict, output: str):
+    def __save_to_db(self, detail: dict, output: str):
         """ Save dict data to sqlite
 
         :Arg:
@@ -306,6 +196,116 @@ class JobSipder51(object):
         finally:
             cursor.close()
             connect.close()
+
+    def save(self, items: json, type: str):
+        """ Iterate through the dictionary to get each item, save each data by specify type.
+
+        Otherwise, the process will try to crawl work requirements and work position.
+        If crawl failed, it is set empty and skip after three retries.
+
+        Finally, add column header and remove duplicate rows
+
+        :Args:
+         - item: JSON data list
+         - type: Data storage engine, support for csv, db and both
+        """
+        if items is None:
+            return
+
+        save_to = {
+            'csv': lambda x: self.__save_to_csv(x, self.CSV_FILE_PATH),
+            'db': lambda x: self.__save_to_db(x, self.SQLITE_FILE_PATH),
+            'both': lambda x: (self.__save_to_csv(x, self.CSV_FILE_PATH),
+                               self.__save_to_db(x, self.SQLITE_FILE_PATH))
+        }
+
+        for key, item in enumerate(items):
+            logger.info('processing in item' + str(key + 1))
+
+            jobDetailDict = {
+                'jobName': item['jobName'],
+                'tags': ",".join(item['jobTags']),
+                'area': ''.join(re.findall(r'[\u4e00-\u9fa5]+', str(item['jobAreaLevelDetail']))),
+                'salary': item['provideSalaryString'],
+                'workYear': item['workYearString'],
+                'degree': item['degreeString'],
+                'companyName': item['fullCompanyName'],
+                'companyType': item['companyTypeString'],
+                'companySize': item['companySizeString'],
+                'logo': item['companyLogo'],
+                'issueDate': item['issueDateString']
+            }
+            save = save_to[type]
+            save(jobDetailDict)
+
+        if type in ['csv', 'both']:
+            label = (['职位名称', '标签', '城市', '薪资', '工作年限', '学位要求',
+                      '公司名称', '公司类型', '人数', 'Logo', '发布时间'])
+
+            header = pd.read_csv(self.CSV_FILE_PATH, nrows=0).columns.tolist()
+            names, set_header = None, False
+            if not set(label).intersection(header):
+                names = label
+                set_header = True
+
+            df = pd.read_csv(self.CSV_FILE_PATH, header=None, names=names, delimiter=',')
+            df.drop_duplicates(inplace=True)
+            df.to_csv(self.CSV_FILE_PATH, index=False, header=set_header)
+
+    def get_data_json(self):
+        """ Get job JSON data
+
+        The following is the execution order
+
+            Driver building and start url
+            Passing slider verification
+            Getting HTML source
+            Parsing HTML by BeautifulSoup, obtain the data through the first div
+            Json Parsing
+
+        Finally, return json data
+        """
+        extra = f"&timestamp={self.timestamp}&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.area}"
+        fake = self.fakeUrl.split('&')
+        fake.remove(random.choice(fake))
+        fake = '&'.join(fake)
+
+        url = self.baseUrl + extra + fake
+        logger.info('Crawling page ' + str(self.page))
+        logger.info('Crawling ' + url)
+
+        web = self.__driver_builder()
+        count = 3
+        dataJson = None
+        while (count > 0):
+            try:
+                time.sleep(random.uniform(5, 10))
+                web.get(url)
+
+                time.sleep(random.uniform(1, 2))
+                self.__slider_verify(web)
+                time.sleep(random.uniform(1, 2))
+
+                html = web.page_source
+                soup = BeautifulSoup(html, "html.parser")
+                data = soup.find('div').text
+
+                dataJson = json.loads(data)
+
+                if dataJson['status'] != '1':
+                    logger.warning('Request failed, the request is unavailable')
+                    dataJson = None
+                    break
+
+                dataJson = dataJson['resultbody']['job']['items']
+                break
+            except:
+                count = count - 1
+                logger.warning("data json sipder failed, waiting for try again, Remaining retry attempts: "
+                               + str(count))
+
+        web.close()
+        return dataJson
 
 
 def start(args: dict, save_engine: str):
