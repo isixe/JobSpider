@@ -40,8 +40,11 @@ class JobSipder51(object):
         self.baseUrl = ('https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb'
                         '&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId=')
         self.fakeUrl = '&jobArea2=&jobType=&salary=&workYear=&degree=&companyType=&companySize=&issueDate='
+        self.root = os.path.abspath('..')
         self.CSV_FILE = '51job.csv'
         self.SQLITE_FILE = '51job.db'
+        self.CSV_FILE_PATH = os.path.join(self.root, "output/job/" + self.CSV_FILE)
+        self.SQLITE_FILE_PATH = os.path.join(self.root, "output/job/" + self.SQLITE_FILE)
         self.create_output_dir()
 
     @staticmethod
@@ -206,15 +209,11 @@ class JobSipder51(object):
         if items is None:
             return
 
-        root = os.path.abspath('..')
-        CSV_FILE_PATH = os.path.join(root, "output/job/" + self.CSV_FILE)
-        SQLITE_FILE_PATH = os.path.join(root, "output/job/" + self.SQLITE_FILE)
-
         save_to = {
-            'csv': lambda x: self.save_to_csv(x, CSV_FILE_PATH),
-            'db': lambda x: self.save_to_db(x, SQLITE_FILE_PATH),
-            'both': lambda x: (self.save_to_csv(x, CSV_FILE_PATH),
-                               self.save_to_db(x, SQLITE_FILE_PATH))
+            'csv': lambda x: self.save_to_csv(x, self.CSV_FILE_PATH),
+            'db': lambda x: self.save_to_db(x, self.SQLITE_FILE_PATH),
+            'both': lambda x: (self.save_to_csv(x, self.CSV_FILE_PATH),
+                               self.save_to_db(x, self.SQLITE_FILE_PATH))
         }
 
         for key, item in enumerate(items):
@@ -240,15 +239,15 @@ class JobSipder51(object):
             label = (['职位名称', '标签', '城市', '薪资', '工作年限', '学位要求',
                       '公司名称', '公司类型', '人数', 'Logo', '发布时间'])
 
-            header = pd.read_csv(CSV_FILE_PATH, nrows=0).columns.tolist()
+            header = pd.read_csv(self.CSV_FILE_PATH, nrows=0).columns.tolist()
             names, set_header = None, False
             if not set(label).intersection(header):
                 names = label
                 set_header = True
 
-            df = pd.read_csv(CSV_FILE_PATH, header=None, names=names, delimiter=',')
+            df = pd.read_csv(self.CSV_FILE_PATH, header=None, names=names, delimiter=',')
             df.drop_duplicates(inplace=True)
-            df.to_csv(CSV_FILE_PATH, index=False, header=set_header)
+            df.to_csv(self.CSV_FILE_PATH, index=False, header=set_header)
 
     def save_to_csv(self, detail: dict, output: str):
         """ Save dict data to csv
