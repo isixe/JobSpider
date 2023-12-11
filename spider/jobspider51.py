@@ -50,7 +50,7 @@ class JobSipder51(object):
 
         root = os.path.abspath('..')
 
-        directory = os.path.join(root, "output")
+        directory = os.path.join(root, "output/job")
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -207,8 +207,8 @@ class JobSipder51(object):
             return
 
         root = os.path.abspath('..')
-        CSV_FILE_PATH = os.path.join(root, "output/" + self.CSV_FILE)
-        SQLITE_FILE_PATH = os.path.join(root, "output/" + self.SQLITE_FILE)
+        CSV_FILE_PATH = os.path.join(root, "output/job/" + self.CSV_FILE)
+        SQLITE_FILE_PATH = os.path.join(root, "output/job/" + self.SQLITE_FILE)
 
         save_to = {
             'csv': lambda x: self.save_to_csv(x, CSV_FILE_PATH),
