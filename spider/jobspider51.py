@@ -148,7 +148,7 @@ class JobSipder51(object):
         """
         detail = [v for k, v in enumerate(detail.values())]
         df = pd.DataFrame([detail])
-        df.to_csv(output, index=False, header=False, mode='a')
+        df.to_csv(output, index=False, header=False, mode='a', encoding='utf-8')
 
     def __save_to_db(self, detail: dict, output: str):
         """ Save dict data to sqlite
@@ -250,7 +250,7 @@ class JobSipder51(object):
 
             df = pd.read_csv(self.CSV_FILE_PATH, header=None, names=names, delimiter=',')
             df.drop_duplicates(inplace=True)
-            df.to_csv(self.CSV_FILE_PATH, index=False, header=set_header)
+            df.to_csv(self.CSV_FILE_PATH, index=False, header=set_header, encoding='utf-8')
 
     def get_data_json(self):
         """ Get job JSON data
