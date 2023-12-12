@@ -93,7 +93,7 @@ class AreaSpider51(object):
          - data: City List
          - output: Data output path
         """
-        label = (['代码', '省级行政区'])
+        label = (['code', 'area'])
         df = pd.DataFrame(data, columns=['k', 'v'])
         df.to_csv(output, index=False, header=label, encoding='utf-8')
 

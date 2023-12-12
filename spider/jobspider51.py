@@ -239,8 +239,8 @@ class JobSipder51(object):
             save(jobDetailDict)
 
         if type in ['csv', 'both']:
-            label = (['职位名称', '标签', '城市', '薪资', '工作年限', '学位要求',
-                      '公司名称', '公司类型', '人数', 'Logo', '发布时间'])
+            label = (['jobName', 'tags', 'area', 'salary', 'workYear', 'degree',
+                      'companyName', 'companyType', 'companySize', 'logo', 'issueDate'])
 
             header = pd.read_csv(self.CSV_FILE_PATH, nrows=0).columns.tolist()
             names, set_header = None, False
