@@ -1,9 +1,10 @@
 # !/usr/bin/env python
 # -*-coding:utf-8 -*-
 # @Time    : 2023/11/30 21:49
-# @Author  : Exisi
+# @Author  : isixe
 # @Version : python3.10.6
 # @Desc    : base spider test
+
 import sqlite3
 import pandas as pd
 from spider.area import areaspider51
