@@ -13,6 +13,7 @@ from spider import jobspider51, logger
 
 def area():
     areaspider51.start(save_engine='both')
+    logger.close()
 
 
 def part_spider():
@@ -23,6 +24,7 @@ def part_spider():
         "area": "000000"
     }
     jobspider51.start(args=param, save_engine='both')
+    logger.close()
 
 
 def full_spider(save_engine: str):
@@ -33,6 +35,7 @@ def full_spider(save_engine: str):
     }
     save = save_to[save_engine]
     save(save_engine)
+    logger.close()
 
 
 def full_spider_csv(type: str):
@@ -46,6 +49,8 @@ def full_spider_csv(type: str):
             "area": area
         }
         jobspider51.start(args=param, save_engine=type)
+
+    logger.close()
 
 
 def full_spider_db(type: str):
@@ -76,3 +81,4 @@ def full_spider_db(type: str):
 if __name__ == '__main__':
     area()
     full_spider(save_engine='both')
+    logger.close()

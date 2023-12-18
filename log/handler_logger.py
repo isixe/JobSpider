@@ -143,3 +143,8 @@ class HandlerLogger:
          - message: log message
         """
         self.logger.critical(message)
+
+    def close(self):
+        """ logger close """
+
+        self.logger.disabled = True
