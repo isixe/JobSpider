@@ -222,6 +222,9 @@ class JobSipder51(object):
         for key, item in enumerate(items):
             logger.info('processing in item' + str(key + 1))
 
+            if 'jobAreaLevelDetail' not in item:
+                item['jobAreaLevelDetail'] = item['jobAreaString']
+
             jobDetailDict = {
                 'jobName': item['jobName'],
                 'tags': ",".join(item['jobTags']),
