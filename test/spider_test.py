@@ -60,5 +60,5 @@ def full_spider_db(type: str):
 
 if __name__ == "__main__":
     area()
-    full_spider(save_engine="both")
+    full_spider(save_engine="csv")
     logger.close()
