@@ -1,16 +1,23 @@
-import os
+"""Customized log handler."""
 import logging
+import os
 import sys
-import colorlog
 from logging.handlers import RotatingFileHandler
+
+import colorlog
 
 
 class HandlerLogger:
-    """Customized log handler,The main functions include console log highlighting
-    and output formatting
+    """Customized log handler.
+
+    The main functions include console log highlightingand output formatting.
     """
 
     def __init__(self, filename: str):
+        """Initialize the HandlerLogger class.
+
+        :param filename: The log file prefix name.
+        """
         self.logger = logging.getLogger()
         self.formatter = self.__init_formatter()
         self.color_formatter = self.__init_color_formatter()
@@ -21,58 +28,55 @@ class HandlerLogger:
         self.__set_console_handler(self.console_handler)
 
     def __set_log(self):
-        """Logging setting"""
-
+        """Set logging configuration."""
         self.logger.setLevel(logging.DEBUG)
 
     def __set_log_handler(self, log_handler: RotatingFileHandler):
-        """set log file logging handler
+        """Set log file logging handler.
 
         :Arg:
          - log_handler: log file logging handler
         """
-
         log_handler.setLevel(logging.DEBUG)
         log_handler.setFormatter(self.formatter)
         self.logger.addHandler(log_handler)
 
     def __set_console_handler(self, console_handler: logging.StreamHandler):
-        """set console logging handler
+        """Set console logging handler.
 
         :Arg:
          - console_handler: console logging handler
         """
-
         console_handler.setLevel(logging.DEBUG)
         console_handler.setFormatter(self.color_formatter)
         self.logger.addHandler(console_handler)
 
     @staticmethod
     def __init_handler(filename: str):
-        """init log file logging handler
+        """Init log file logging handler.
 
         :Arg:
          - filename: log file prefix name
         """
-
         current_dir = os.path.dirname(__file__)
         abs_dir = os.path.join(current_dir, filename)
         handler = RotatingFileHandler(
-            filename=abs_dir, maxBytes=512 * 1024, encoding="utf-8", backupCount=3
+            filename=abs_dir,
+            maxBytes=512 * 1024,
+            encoding="utf-8",
+            backupCount=3,
         )
         return handler
 
     @staticmethod
     def __init_console_handler():
-        """init console logging handler"""
-
+        """Init console logging handler."""
         console_handler = colorlog.StreamHandler(sys.stdout)
         return console_handler
 
     @staticmethod
     def __init_formatter():
-        """init log file formatter"""
-
+        """Init log file formatter."""
         LOG_FORMAT = "%(asctime)s [ %(levelname)s ]: %(message)s"
         DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
         formater = logging.Formatter(LOG_FORMAT, DATE_FORMAT)
@@ -80,8 +84,7 @@ class HandlerLogger:
 
     @staticmethod
     def __init_color_formatter():
-        """init console color formatter"""
-
+        """Init console color formatter."""
         LOG_FORMAT = (
             "%(log_color)s%(asctime)s %(log_color)s[ %(levelname)s%(reset)s%(log_color)s ]"
             "%(reset)s%(log_color)s: %(message)s"
@@ -142,6 +145,5 @@ class HandlerLogger:
         self.logger.critical(message)
 
     def close(self):
-        """logger close"""
-
+        """Logger close."""
         self.logger.disabled = True

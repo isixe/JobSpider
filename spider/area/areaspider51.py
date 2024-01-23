@@ -1,21 +1,24 @@
+"""This module is used to crawl the area data of 51job."""
 import os
 import re
 import sqlite3
-import requests
-import pandas as pd
-from spider import logger
-from fake_useragent import UserAgent
-import urllib3
 import ssl
 
+import pandas as pd
+import requests
+import urllib3
+from fake_useragent import UserAgent
 
-# 由于前程无忧接口限制，每个搜索词最终获取最大条数被限制为 1000
-class AreaSpider51(object):
-    """This crawler is crawled based on the API"""
+from spider import logger
+
+
+# Due to the limitations of the '51job' interface,
+# the maximum number of entries that can be obtained per search term is limited to 1000
+class AreaSpider51:
+    """This crawler is crawled based on the API."""
 
     def __init__(self):
-        """Init the url param"""
-
+        """Init the url param."""
         self.url = "https://js.51jobcdn.com/in/js/h5/dd/d_jobarea.js"
         self.user_agent = UserAgent().random
         self.headers = {
@@ -26,7 +29,7 @@ class AreaSpider51(object):
         self.create_output_dir()
 
     def get_data_list(self):
-        """Get area list data
+        """Get area list data.
 
         The following is the execution order
 
@@ -36,7 +39,6 @@ class AreaSpider51(object):
 
         Finally, return list data
         """
-
         request = get_legacy_session().get(self.url, headers=self.headers).text
         start = request.find("hotcity") + 8
         end = request.find("]", start)
@@ -55,21 +57,19 @@ class AreaSpider51(object):
 
     @staticmethod
     def create_output_dir():
-        """Create output directory if not exists"""
-
+        """Create output directory if not exists."""
         root = os.path.abspath("..")
         directory = os.path.join(root, "output/area")
         if not os.path.exists(directory):
             os.makedirs(directory)
 
     def save(self, data: list, type: str):
-        """Save functions through different types of mappings
+        """Save functions through different types of mappings.
 
         :Arg:
          - data: City List
          - type: Data storage engine, support for csv, db and both
         """
-
         root = os.path.abspath("..")
         CSV_FILE_PATH = os.path.join(root, "output/area/" + self.CSV_FILE)
         SQLITE_FILE_PATH = os.path.join(root, "output/area/" + self.SQLITE_FILE)
@@ -86,7 +86,7 @@ class AreaSpider51(object):
         save(data)
 
     def save_to_csv(self, data: list, output: str):
-        """Save list data to csv
+        """Save list data to csv.
 
         :Arg:
          - data: City List
@@ -97,7 +97,7 @@ class AreaSpider51(object):
         df.to_csv(output, index=False, header=label, encoding="utf-8")
 
     def save_to_db(self, data: list, output: str):
-        """Save list data to sqlite
+        """Save list data to sqlite.
 
         :Arg:
          - data: City List
@@ -128,14 +128,17 @@ class AreaSpider51(object):
 
 
 class CustomHttpAdapter(requests.adapters.HTTPAdapter):
-    # "Transport adapter" that allows us to use custom ssl_context.
+    """Transport adapter" that allows us to use custom ssl_context."""
+
     # ref: https://stackoverflow.com/a/73519818/16493978
 
     def __init__(self, ssl_context=None, **kwargs):
+        """Init the ssl_context param."""
         self.ssl_context = ssl_context
         super().__init__(**kwargs)
 
     def init_poolmanager(self, connections, maxsize, block=False):
+        """Create a urllib3.PoolManager for each proxy."""
         self.poolmanager = urllib3.poolmanager.PoolManager(
             num_pools=connections,
             maxsize=maxsize,
@@ -145,6 +148,7 @@ class CustomHttpAdapter(requests.adapters.HTTPAdapter):
 
 
 def get_legacy_session():
+    """Get legacy session."""
     ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
     ctx.options |= 0x4  # OP_LEGACY_SERVER_CONNECT
     session = requests.session()
@@ -153,7 +157,7 @@ def get_legacy_session():
 
 
 def start(save_engine: str):
-    """spider starter
+    """Spider starter.
 
     :Arg:
      - save_engine: Data storage engine, support for csv, db and both

@@ -1,23 +1,26 @@
+"""This module is used to crawl 51job data."""
+import json
 import os
 import random
 import re
-import json
-import time
 import sqlite3
+import time
+
 import pandas as pd
-from spider import logger
 from bs4 import BeautifulSoup
-from selenium import webdriver
 from fake_useragent import UserAgent
+from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
+from spider import logger
 
-class JobSipder51(object):
-    """This crawler is crawled based on the API"""
+
+class JobSipder51:
+    """This crawler is crawled based on the API."""
 
     def __init__(self, keyword: str, page: int, pageSize: int, area: str):
-        """Init the url param
+        """Init the url param.
 
         :Args:
          - keyword: Search keyword
@@ -40,14 +43,14 @@ class JobSipder51(object):
         self.SQLITE_FILE = "51job.db"
         self.CSV_FILE_PATH = os.path.join(self.root, "output/job/" + self.CSV_FILE)
         self.SQLITE_FILE_PATH = os.path.join(
-            self.root, "output/job/" + self.SQLITE_FILE
+            self.root,
+            "output/job/" + self.SQLITE_FILE,
         )
         self.__create_output_dir()
 
     @staticmethod
     def __create_output_dir():
-        """Create output directory if not exists"""
-
+        """Create output directory if not exists."""
         root = os.path.abspath("..")
 
         directory = os.path.join(root, "output/job")
@@ -55,7 +58,7 @@ class JobSipder51(object):
             os.makedirs(directory)
 
     def __driver_builder(self):
-        """Init webdriver
+        """Init webdriver.
 
         During the building process, it is necessary to set up an anti crawler detection strategy by Option.
 
@@ -95,7 +98,8 @@ class JobSipder51(object):
         options.add_argument("--window-size=1920,1080")
 
         options.add_experimental_option(
-            "excludeSwitches", ["enable-automation", "enable-logging"]
+            "excludeSwitches",
+            ["enable-automation", "enable-logging"],
         )
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("useAutomationExtension", False)
@@ -111,7 +115,7 @@ class JobSipder51(object):
         return web
 
     def __slider_verify(self, web: webdriver):
-        """Slider verification action
+        """Slider verification action.
 
         This requires the mouse to perform the following operations in following order
 
@@ -141,7 +145,7 @@ class JobSipder51(object):
         action_chains.perform()
 
     def __save_to_csv(self, detail: dict, output: str):
-        """Save dict data to csv
+        """Save dict data to csv.
 
         :Arg:
          - detail: Dictionary of a single data
@@ -152,7 +156,7 @@ class JobSipder51(object):
         df.to_csv(output, index=False, header=False, mode="a", encoding="utf-8")
 
     def __save_to_db(self, detail: dict, output: str):
-        """Save dict data to sqlite
+        """Save dict data to sqlite.
 
         :Arg:
          - output: Data output path
@@ -232,7 +236,7 @@ class JobSipder51(object):
                 "jobName": item["jobName"],
                 "tags": ",".join(item["jobTags"]),
                 "area": "".join(
-                    re.findall(r"[\u4e00-\u9fa5]+", str(item["jobAreaLevelDetail"]))
+                    re.findall(r"[\u4e00-\u9fa5]+", str(item["jobAreaLevelDetail"])),
                 ),
                 "salary": item["provideSalaryString"],
                 "workYear": item["workYearString"],
@@ -268,15 +272,21 @@ class JobSipder51(object):
                 set_header = True
 
             df = pd.read_csv(
-                self.CSV_FILE_PATH, header=None, names=names, delimiter=","
+                self.CSV_FILE_PATH,
+                header=None,
+                names=names,
+                delimiter=",",
             )
             df.drop_duplicates(inplace=True)
             df.to_csv(
-                self.CSV_FILE_PATH, index=False, header=set_header, encoding="utf-8"
+                self.CSV_FILE_PATH,
+                index=False,
+                header=set_header,
+                encoding="utf-8",
             )
 
     def get_data_json(self):
-        """Get job JSON data
+        """Get job JSON data.
 
         The following is the execution order
 
@@ -322,11 +332,11 @@ class JobSipder51(object):
 
                 dataJson = dataJson["resultbody"]["job"]["items"]
                 break
-            except:
+            except Exception:
                 count = count - 1
                 logger.warning(
                     "data json sipder failed, waiting for try again, Remaining retry attempts: "
-                    + str(count)
+                    + str(count),
                 )
 
         web.close()
@@ -334,7 +344,7 @@ class JobSipder51(object):
 
 
 def start(args: dict, save_engine: str):
-    """spider starter
+    """Spider starter.
 
     :Args:
      - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'area': str}

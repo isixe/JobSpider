@@ -1,7 +1,9 @@
 import sqlite3
+
 import pandas as pd
-from spider.area import areaspider51
+
 from spider import jobspider51, logger
+from spider.area import areaspider51
 
 
 def area():
@@ -28,7 +30,11 @@ def full_spider(save_engine: str):
 
 def full_spider_csv(type: str):
     df = pd.read_csv(
-        "../output/area/51area.csv", header=None, names=None, skiprows=1, delimiter=","
+        "../output/area/51area.csv",
+        header=None,
+        names=None,
+        skiprows=1,
+        delimiter=",",
     )
 
     for area in df[0]:
