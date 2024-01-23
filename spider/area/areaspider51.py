@@ -9,6 +9,7 @@ import urllib3
 import ssl
 
 
+# 由于前程无忧接口限制，每个搜索词最终获取最大条数被限制为 1000
 class AreaSpider51(object):
     """This crawler is crawled based on the API"""
 

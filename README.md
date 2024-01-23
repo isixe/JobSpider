@@ -1,19 +1,10 @@
 # JobSpider
 
-Python 基于 Selenium 爬取招聘岗位信息的基础程序，支持 CSV 和 SQLite 数据存储
+Python is based on Selenium's basic program for crawling job postings, and supports CSV and SQLite data storage.
 
-## 计划
+## Run
 
-- [x] 前程无忧
-- [ ] Boss 直聘
-- [ ] ~~智联招聘~~
-
-> [!TIP]
-> 由于前程无忧接口限制，每个搜索词最终获取最大条数被限制为 1000
-
-## 运行
-
-需要手动安装 Edge 浏览器, 驱动由[SergeyPirogov/webdriver_manager](https://github.com/SergeyPirogov/webdriver_manager)自动下载
+Need Edge isntalled, and driver will controled and installed by [SergeyPirogov/webdriver_manager](https://github.com/SergeyPirogov/webdriver_manager)
 
 ```
 pip install requirements.txt
@@ -21,7 +12,5 @@ python test/drive_test.py
 python test/spider_test.py
 ```
 
-## 声明
-
 > [!WARNING]
-> 该程序仅用于学习研究，请勿用于任何商业或非法目的，若违反规定请自行对此负责，本人对此概不承担任何责任。
+> This program is for study and research purposes only, please do not use it for any commercial or illegal purposes, and if you violate the regulations, you are responsible for it, and I will not be responsible for it.
