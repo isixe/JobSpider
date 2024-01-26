@@ -1,3 +1,4 @@
+"""Main function of the project."""
 import sqlite3
 
 import pandas as pd
@@ -7,17 +8,20 @@ from spider.area import areaspider51
 
 
 def area():
-    areaspider51.start(save_engine="both")
+    """Get all area code."""
+    areaspider51.start(save_engine="csv")
     logger.close()
 
 
 def part_spider():
+    """Get the data of Job."""
     param = {"keyword": "Python", "page": 1, "pageSize": 1000, "area": "000000"}
     jobspider51.start(args=param, save_engine="both")
     logger.close()
 
 
 def full_spider(save_engine: str):
+    """Get the data of Job."""
     save_to = {
         "csv": lambda x: full_spider_csv(x),
         "db": lambda x: full_spider_db(x),
@@ -29,6 +33,7 @@ def full_spider(save_engine: str):
 
 
 def full_spider_csv(type: str):
+    """Get the data of Job save to csv."""
     df = pd.read_csv(
         "../output/area/51area.csv",
         header=None,
@@ -45,6 +50,7 @@ def full_spider_csv(type: str):
 
 
 def full_spider_db(type: str):
+    """Get the data of Job save to db."""
     results = None
     connect = sqlite3.connect("../output/area/51area.db")
     cursor = connect.cursor()

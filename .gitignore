@@ -19,5 +19,6 @@ __pycache__
 # pyenv/ 
 # python==3.10.13 in my local
 .python-version
+
 # disable output folder
-output/ 
+output/
