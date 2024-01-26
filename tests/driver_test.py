@@ -9,9 +9,9 @@ print("Installed msedgedriver version:", msedgedriver_path)
 service = EdgeService(executable_path=msedgedriver_path)
 options = webdriver.EdgeOptions()
 
-options.add_argument('--headless=new')
+options.add_argument("--headless=new")
 options.add_argument("--remote-debugging-port=0")
-options.add_argument('--no-sandbox')
+options.add_argument("--no-sandbox")
 
 driver = webdriver.Edge(service=service, options=options)
 
