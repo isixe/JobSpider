@@ -9,7 +9,7 @@ Ensure that Microsoft Edge is installed, and the driver will be managed and inst
 ```
 pip install requirements.txt
 python test/drive_test.py
-python test/spider_test.py
+python main.py
 ```
 
 > [!WARNING]
