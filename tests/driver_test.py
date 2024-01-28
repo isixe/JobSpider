@@ -20,3 +20,5 @@ print(driver.capabilities["browserVersion"])
 driver.get("https://www.baidu.com")
 title = driver.title
 print(title)
+
+driver.quit()
