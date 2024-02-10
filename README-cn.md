@@ -1,11 +1,11 @@
 # JobSpider
+ **[English](https://github.com/isixe/JobSpider/blob/main/README.md) | 中文**
 
 Python 基于 Selenium 爬取招聘岗位信息的基础程序，支持 CSV 和 SQLite 数据存储
 
 # 计划
 - [x] 前程无忧
 - [ ] Boss直聘
-- [ ] ~~智联招聘~~
 
 > [!TIP]
 > 由于前程无忧接口限制，每个搜索词最终获取最大条数被限制为1000
