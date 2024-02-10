@@ -3,14 +3,14 @@
 
 Python 基于 Selenium 爬取招聘岗位信息的基础程序，支持 CSV 和 SQLite 数据存储
 
-# 计划
+## 计划
 - [x] 前程无忧
 - [ ] Boss直聘
 
 > [!TIP]
 > 由于前程无忧接口限制，每个搜索词最终获取最大条数被限制为1000
 
-# 环境要求
+## 环境要求
 
 ```
 Python 3.11.2
@@ -23,7 +23,7 @@ selenium==4.15.2
 requests==2.31.0
 ```
 
-# 运行
+## 运行
 
 ```
 pip install requirements.txt
@@ -31,7 +31,7 @@ pip install requirements.txt
 
 运行示例 test/spider_test.py
 
-# 项目结构
+## 项目结构
 
 ```
 ├─README.md 
@@ -58,6 +58,6 @@ pip install requirements.txt
   └─spider_test.py 
 ```
 
-# 声明
+## 声明
 > [!WARNING]
 > 该程序仅用于学习研究，请勿用于任何商业或非法目的，若违反规定请自行对此负责，本人对此概不承担任何责任。
