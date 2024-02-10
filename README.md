@@ -3,14 +3,14 @@
 
 A Python basic program based on Selenium for crawling recruitment position information, supporting CSV and SQLite data storage
 
-# Todo
+## Todo
 - [x] 51job
 - [ ] Boss zhipin
 
 > [!TIP]
 > Due to the limitation of 51job's API, the maximum number of entries obtained per search term is limited to 1000
 
-# Environmental Requirement
+## Environmental Requirement
 
 ```
 Python 3.11.2
@@ -23,7 +23,7 @@ selenium==4.15.2
 requests==2.31.0
 ```
 
-# Usage
+## Usage
 
 ```
 pip install requirements.txt
@@ -31,7 +31,7 @@ pip install requirements.txt
 
 run test/spider_test.py
 
-# Project Structure
+## Project Structure
 
 ```
 ├─README.md 
@@ -58,6 +58,6 @@ run test/spider_test.py
   └─spider_test.py 
 ```
 
-# Statement
+## Statement
 > [!WARNING]
 > This program is only for learning and research purposes. Please do not use it for any business or illegal purpose. If you violate the regulations, please be responsible for yourself.。
