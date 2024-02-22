@@ -1,0 +1,26 @@
+# Used for testing the Chrome browser with selenium
+from fake_useragent import UserAgent
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+
+options = Options()
+options.add_argument('--no-sandbox')
+options.add_argument("--headless")
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument("--window-size=1920,1080")
+options.add_experimental_option(
+    "excludeSwitches",
+    ["enable-automation", "enable-logging"],
+)
+options.add_argument("--disable-blink-features=AutomationControlled")
+options.add_experimental_option("useAutomationExtension", False)
+options.add_argument(f"user-agent={UserAgent().random}")
+driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+
+script = 'Object.defineProperty(navigator, "webdriver", {get: () => false,});'
+driver.execute_script(script)
+
+driver.get("https://www.baidu.com")
+print(driver.title)

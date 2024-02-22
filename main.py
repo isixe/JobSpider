@@ -52,7 +52,7 @@ def full_spider_csv(type: str):
 def full_spider_db(type: str):
     """Get the data of Job save to db."""
     results = None
-    connect = sqlite3.connect("../output/area/51area.db")
+    connect = sqlite3.connect("output/area/51area.db")
     cursor = connect.cursor()
     sql = """SELECT `code` FROM `area51`;"""
     try:
@@ -71,6 +71,6 @@ def full_spider_db(type: str):
 
 
 if __name__ == "__main__":
-    area()
-    full_spider(save_engine="csv")
+    # area()
+    full_spider(save_engine="db")
     logger.close()

@@ -10,8 +10,12 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver import ActionChains
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 
 from spider import logger
 
@@ -92,27 +96,26 @@ class JobSipder51:
         Finally, inject script to change navigator = false.
         """
         user_agent = UserAgent().random
-
-        options = webdriver.EdgeOptions()
-        options.add_argument("--headless=new")
+        service = ChromeService(ChromeDriverManager().install())
+        
+        options = Options()
+        options.add_argument('--no-sandbox')
+        options.add_argument("--headless")
+        options.add_argument('--disable-dev-shm-usage')
         options.add_argument("--window-size=1920,1080")
-
         options.add_experimental_option(
             "excludeSwitches",
             ["enable-automation", "enable-logging"],
         )
-        options.add_argument("--no-sandbox")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("useAutomationExtension", False)
         options.add_argument(f"user-agent={user_agent}")
 
-        # options.add_argument('--inprivate')
-        # options.add_argument("--start-maximized")
-
-        web = webdriver.Edge(options=options)
-
-        script = 'Object.defineProperty(navigator, "webdriver", {get: () => false,});'
-        web.execute_script(script)
+        web = webdriver.Chrome(service=service, options=options)
+        web.execute_script(
+            'Object.defineProperty(navigator, "webdriver", {get: () => false,});'
+            )
+        logger.info("Building webdriver done") 
         return web
 
     def __slider_verify(self, web: webdriver):
@@ -319,7 +322,10 @@ class JobSipder51:
                 time.sleep(random.uniform(1, 2))
                 self.__slider_verify(web)
                 time.sleep(random.uniform(1, 2))
-
+            except WebDriverException as e:
+                print(f"Failed to get URL: {url}. Error: {e}")
+            
+            try:
                 html = web.page_source
                 soup = BeautifulSoup(html, "html.parser")
                 data = soup.find("div").text
