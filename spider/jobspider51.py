@@ -9,6 +9,7 @@ import time
 import pandas as pd
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
+from requests.exceptions import RequestException
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver import ActionChains
@@ -23,26 +24,22 @@ from spider import logger
 class JobSipder51:
     """This crawler is crawled based on the API."""
 
-    def __init__(self, keyword: str, page: int, pageSize: int, area: str):
+    def __init__(self, keyword: str, page: int, area: str):
         """Init the url param.
 
         :Args:
          - keyword: Search keyword
          - page: Page number
-         - pageSize: Specify the number of data per page
          - area: Specify the area to search for
         """
         self.keyword = keyword
         self.page = page
-        self.pageSize = pageSize
         self.area = area
         self.timestamp = str(int(time.time()))
-        self.baseUrl = (
-            "https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb"
-            "&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId="
-        )
+        self.baseUrl = "https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId="
         self.fakeUrl = "&jobArea2=&jobType=&salary=&workYear=&degree=&companyType=&companySize=&issueDate="
-        self.root = os.path.abspath("..")
+        self.current_dir = os.path.dirname(os.path.realpath(__file__))
+        self.root = os.path.dirname(self.current_dir)
         self.CSV_FILE = "51job.csv"
         self.SQLITE_FILE = "51job.db"
         self.CSV_FILE_PATH = os.path.join(self.root, "output/job/" + self.CSV_FILE)
@@ -52,12 +49,9 @@ class JobSipder51:
         )
         self.__create_output_dir()
 
-    @staticmethod
-    def __create_output_dir():
+    def __create_output_dir(self):
         """Create output directory if not exists."""
-        root = os.path.abspath("..")
-
-        directory = os.path.join(root, "output/job")
+        directory = os.path.join(self.root, "output/job")
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -66,8 +60,14 @@ class JobSipder51:
 
         During the building process, it is necessary to set up an anti crawler detection strategy by Option.
 
+            .add_argument('--no-sandbox')
+            -> Disable sandbox mode
+
             .add_argument('headless')
             -> Set headless page, run silently
+
+            .add_argument('--disable-dev-shm-usage')
+            -> Disable shared memory
 
             .add_argument("--window-size=1920,1080")
             -> In headless status, browse without a window size, so if the size of the window is not specified,
@@ -77,9 +77,9 @@ class JobSipder51:
             -> Disable auto control and log feature of the browser
 
             .add_argument('--disable-blink-features=AutomationControlled')
-            -> Set navigator.webdriver=false
+            -> Disable auto control extension of the browser
 
-            .add_argument('--disable-blink-features=AutomationControlled')
+            .add_argument(("useAutomationExtension", False))
             -> Disable auto control extension of the browser
 
             .add_argument(f'user-agent={user_agent}')
@@ -93,15 +93,15 @@ class JobSipder51:
             .add_argument("--start-maximized")
             -> Maximize the window
 
-        Finally, inject script to change navigator = false.
+        Finally, inject script to change navigator = false to avoid detection.
         """
         user_agent = UserAgent().random
         service = ChromeService(ChromeDriverManager().install())
-        
+
         options = Options()
-        options.add_argument('--no-sandbox')
+        options.add_argument("--no-sandbox")
         options.add_argument("--headless")
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--window-size=1920,1080")
         options.add_experimental_option(
             "excludeSwitches",
@@ -114,8 +114,9 @@ class JobSipder51:
         web = webdriver.Chrome(service=service, options=options)
         web.execute_script(
             'Object.defineProperty(navigator, "webdriver", {get: () => false,});'
-            )
-        logger.info("Building webdriver done") 
+        )
+        logger.info("Building webdriver done")
+
         return web
 
     def __slider_verify(self, web: webdriver):
@@ -231,8 +232,6 @@ class JobSipder51:
         }
 
         for key, item in enumerate(items):
-            logger.info("processing in item" + str(key + 1))
-
             if "jobAreaLevelDetail" not in item:
                 item["jobAreaLevelDetail"] = item["jobAreaString"]
 
@@ -251,6 +250,8 @@ class JobSipder51:
                 "logo": item["companyLogo"],
                 "issueDate": item["issueDateString"],
             }
+            logger.info("Saving: " + str(jobDetailDict))
+
             save = save_to[type]
             save(jobDetailDict)
 
@@ -289,6 +290,16 @@ class JobSipder51:
                 encoding="utf-8",
             )
 
+    def build_url(self):
+        """Build the URL for the job search API."""
+        extra = f"&timestamp={self.timestamp}&keyword={self.keyword}&pageNum={self.page}&jobArea={self.area}"
+        fake = self.fakeUrl.split("&")
+        fake.remove(random.choice(fake))
+        fake = "&".join(fake)
+        url = self.baseUrl + extra + fake
+        logger.info("Crawling " + url)
+        return url
+
     def get_data_json(self):
         """Get job JSON data.
 
@@ -302,15 +313,7 @@ class JobSipder51:
 
         Finally, return json data
         """
-        extra = f"&timestamp={self.timestamp}&keyword={self.keyword}&pageNum={self.page}&pageSize={self.pageSize}&jobArea={self.area}"
-        fake = self.fakeUrl.split("&")
-        fake.remove(random.choice(fake))
-        fake = "&".join(fake)
-
-        url = self.baseUrl + extra + fake
-        logger.info("Crawling page " + str(self.page))
-        logger.info("Crawling " + url)
-
+        url = self.build_url()
         web = self.__driver_builder()
         count = 3
         dataJson = None
@@ -324,11 +327,11 @@ class JobSipder51:
                 time.sleep(random.uniform(1, 2))
             except WebDriverException as e:
                 print(f"Failed to get URL: {url}. Error: {e}")
-            
+
             try:
                 html = web.page_source
                 soup = BeautifulSoup(html, "html.parser")
-                data = soup.find("div").text
+                data = soup.find("body").text
 
                 dataJson = json.loads(data)
 
@@ -339,11 +342,10 @@ class JobSipder51:
 
                 dataJson = dataJson["resultbody"]["job"]["items"]
                 break
-            except Exception:
-                count = count - 1
+            except RequestException as e:
+                count -= 1
                 logger.warning(
-                    "data json sipder failed, waiting for try again, Remaining retry attempts: "
-                    + str(count),
+                    f"data json spider failed due to {e}, waiting to try again, remaining retry attempts: {count}"
                 )
 
         web.close()
@@ -354,7 +356,7 @@ def start(args: dict, save_engine: str):
     """Spider starter.
 
     :Args:
-     - param: Url param, type Dict{'keyword': str, 'page': int, 'pageSize': int, 'area': str}
+     - param: Url param, type Dict{'keyword': str, 'page': int, 'area': str}
      - save_engine: Data storage engine, support for csv, db and both
     """
     if save_engine not in ["csv", "db", "both"]:
@@ -363,7 +365,6 @@ def start(args: dict, save_engine: str):
     spider = JobSipder51(
         keyword=args["keyword"],
         page=args["page"],
-        pageSize=args["pageSize"],
         area=args["area"],
     )
     data_json = spider.get_data_json()
