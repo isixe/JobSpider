@@ -29,3 +29,4 @@ driver.execute_script(script)
 
 driver.get("https://www.baidu.com")
 print(driver.title)
+driver.quit()  # quit to close all open windows
