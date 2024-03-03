@@ -65,19 +65,25 @@ def full_spider_db(type: str, pageNum: int):
         cursor.close()
         connect.close()
 
-    for area in results:
+    for area in results[STRAT_AREA_CODE - 1 : END_AREA_CODE]:
         for page in range(1, pageNum + 1):
-            # pageSize will casue some problem, and abondon it.
-            # The maximum value of total result is 1000
-            # So, one page return 50 results, and the maximum page is 20
-            param = {"keyword": "Python", "page": page, "area": area[0]}
-            logger.info("Crawling area " + area[1] + " of page-" + str(page))
+            param = {"keyword": KEYWORD, "page": page, "area": area[0]}
+            logger.info(f"Crawling area {area[0]}-{area[1]} of page-{page}")
             jobspider51.start(args=param, save_engine=type)
 
+
+KEYWORD = "数据挖掘"
+
+# The maximum value of total result is 1000,
+# one page return 50 results, and the maximum page is 20
+MAX_PAGE_NUM = 20
+
+# control the area, total is 56.
+STRAT_AREA_CODE = 24
+END_AREA_CODE = 30
 
 if __name__ == "__main__":
     # area()
     # TODO: DB works well, but CSV still has some problem.
-    full_job_spider(save_engine="db", pageNum=2)
-    logger.info("The spider is over.")
+    full_job_spider(save_engine="db", pageNum=MAX_PAGE_NUM)
     logger.close()

@@ -11,27 +11,27 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from requests.exceptions import RequestException
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 from spider import logger
+
+MAX_RETRIES = 3
+MIN_SLEEP = 1
+MAX_SLEEP = 3
 
 
 class JobSipder51:
     """This crawler is crawled based on the API."""
 
     def __init__(self, keyword: str, page: int, area: str):
-        """Init the url param.
-
-        :Args:
-         - keyword: Search keyword
-         - page: Page number
-         - area: Specify the area to search for
-        """
+        """Init the url param."""
         self.keyword = keyword
         self.page = page
         self.area = area
@@ -115,39 +115,46 @@ class JobSipder51:
         web.execute_script(
             'Object.defineProperty(navigator, "webdriver", {get: () => false,});'
         )
+
+        # cookie = web.get_cookies()
+        # logger.info("Cookie: " + str(cookie))
+        # In local wsl2, empty cookie works well
+
         logger.info("Building webdriver done")
 
         return web
 
     def __slider_verify(self, web: webdriver):
-        """Slider verification action.
-
-        This requires the mouse to perform the following operations in following order
-
-            1. put mouse on slider       ->   .move_to_element(slider)
-            2. hold mouse on             ->   .click_and_hold()
-            3. move to target position   ->   .move_by_offset(300, 0)
-
-        Finally, perform action          ->   .perform()
-
-        :Args:
-         - web: Browser webdriver
-        """
-        slider = web.find_elements(By.XPATH, '//div[@class="nc_bg"]')
-
-        if len(slider) <= 0:
-            logger.warning("slider not found")
+        """Slider verification action."""
+        try:
+            # Wait for the slider to be present in the DOM
+            slider = WebDriverWait(web, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@class="nc_bg"]'))
+            )
+        except TimeoutException:
+            logger.warning("Slider not found")
             return
 
-        slider = slider[0]
-        action_chains = (
-            ActionChains(web)
-            .move_to_element(slider)
-            .click_and_hold()
-            .move_by_offset(300 + random.randint(1, 20), 0)
-        )
+        slider = web.find_elements(By.XPATH, '//div[@class="nc_bg"]')[0]
 
-        action_chains.perform()
+        # Add random clicks to simulate human behavior
+        for _ in range(random.randint(1, 3)):
+            # "/3" to avoid out of range
+            x = random.uniform(0, web.get_window_size()["width"] / 3)
+            y = random.uniform(0, web.get_window_size()["height"] / 3)
+            ActionChains(web).pause(random.uniform(0.000001, 0.00005)).move_by_offset(
+                x, y
+            ).click().perform()
+
+        # Break down the movement into smaller steps
+        action_chains = ActionChains(web).move_to_element(slider).click_and_hold()
+        steps = 30  # Number of small steps
+        for _ in range(steps):
+            action_chains.move_by_offset(20 + random.uniform(0.005, 0.01), 0)
+            action_chains.pause(
+                random.uniform(0.000001, 0.00005)
+            )  # Short delay between each step
+        action_chains.release().perform()
 
     def __save_to_csv(self, detail: dict, output: str):
         """Save dict data to csv.
@@ -161,11 +168,7 @@ class JobSipder51:
         df.to_csv(output, index=False, header=False, mode="a", encoding="utf-8")
 
     def __save_to_db(self, detail: dict, output: str):
-        """Save dict data to sqlite.
-
-        :Arg:
-         - output: Data output path
-        """
+        """Save dict data to sqlite."""
         connect = sqlite3.connect(output)
         cursor = connect.cursor()
         sqlTable = """CREATE TABLE IF NOT EXISTS `job51` (
@@ -301,64 +304,54 @@ class JobSipder51:
         return url
 
     def get_data_json(self):
-        """Get job JSON data.
-
-        The following is the execution order
-
-            Driver building and start url
-            Passing slider verification
-            Getting HTML source
-            Parsing HTML by BeautifulSoup, obtain the data through the first div
-            Json Parsing
-
-        Finally, return json data
-        """
+        """Get the JSON data from the API."""
         url = self.build_url()
         web = self.__driver_builder()
-        count = 3
         dataJson = None
-        while count > 0:
+
+        for _ in range(MAX_RETRIES):
             try:
-                time.sleep(random.uniform(5, 10))
-                web.get(url)
-
-                time.sleep(random.uniform(1, 2))
-                self.__slider_verify(web)
-                time.sleep(random.uniform(1, 2))
-            except WebDriverException as e:
-                print(f"Failed to get URL: {url}. Error: {e}")
-
-            try:
-                html = web.page_source
-                soup = BeautifulSoup(html, "html.parser")
-                data = soup.find("body").text
-
-                dataJson = json.loads(data)
-
-                if dataJson["status"] != "1":
-                    logger.warning("Request failed, the request is unavailable")
-                    dataJson = None
+                self.navigate_to_url(web, url)
+                self.pass_slider_verification(web)
+                dataJson = self.parse_html(web.page_source)
+                if dataJson is not None:  # success to get data page
                     break
-
-                dataJson = dataJson["resultbody"]["job"]["items"]
-                break
-            except RequestException as e:
-                count -= 1
-                logger.warning(
-                    f"data json spider failed due to {e}, waiting to try again, remaining retry attempts: {count}"
-                )
+                else:  # no data page, jump to next
+                    return
+            except (WebDriverException, RequestException) as e:
+                logger.warning(f"Failed due to {e}, retrying...")
 
         web.close()
         return dataJson
 
+    def navigate_to_url(self, web, url):
+        """Navigate to the given URL."""
+        time.sleep(random.uniform(MIN_SLEEP, MAX_SLEEP))
+        web.get(url)
+
+    def pass_slider_verification(self, web):
+        """Pass the slider verification."""
+        logger.info("Slider verification")
+        time.sleep(random.uniform(MIN_SLEEP, MAX_SLEEP))
+        self.__slider_verify(web)
+
+    def parse_html(self, html):
+        """Parse the HTML content and return the job items."""
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+            data = soup.find("body").text
+            dataJson = json.loads(data)
+            if dataJson["status"] != "1":
+                logger.warning("Request failed, the request is unavailable")
+                return None
+        except Exception as e:
+            logger.warning(f"Failed to parse HTML: {e}")
+            return None
+        return dataJson["resultbody"]["job"]["items"]
+
 
 def start(args: dict, save_engine: str):
-    """Spider starter.
-
-    :Args:
-     - param: Url param, type Dict{'keyword': str, 'page': int, 'area': str}
-     - save_engine: Data storage engine, support for csv, db and both
-    """
+    """Spider starter."""
     if save_engine not in ["csv", "db", "both"]:
         return logger.error("The data storage engine must be 'csv' , 'db' or 'both' ")
 
