@@ -37,7 +37,7 @@ class HandlerLogger:
         :Arg:
          - log_handler: log file logging handler
         """
-        log_handler.setLevel(logging.DEBUG)
+        log_handler.setLevel(logging.INFO)
         log_handler.setFormatter(self.formatter)
         self.logger.addHandler(log_handler)
 
@@ -47,7 +47,7 @@ class HandlerLogger:
         :Arg:
          - console_handler: console logging handler
         """
-        console_handler.setLevel(logging.DEBUG)
+        console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(self.color_formatter)
         self.logger.addHandler(console_handler)
 
@@ -62,7 +62,7 @@ class HandlerLogger:
         abs_dir = os.path.join(current_dir, filename)
         handler = RotatingFileHandler(
             filename=abs_dir,
-            maxBytes=512 * 1024,
+            maxBytes=1024 * 1024,
             encoding="utf-8",
             backupCount=3,
         )
