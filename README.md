@@ -1,6 +1,6 @@
 # JobSpider
 
-An application crafted for job posting crawling, developed with Selenium and Python, featuring support for data storage in both CSV and SQLite formats.
+An application crafted for job posting crawling, developed with Selenium and Python, featuring support for data storage in SQLite formats.
 
 ## Run
 
