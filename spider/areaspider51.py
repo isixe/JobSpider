@@ -7,13 +7,13 @@ import requests
 from fake_useragent import UserAgent
 
 from spider import logger
-from spider.config import SQLITE_FILE_PATH
+from spider.config import AREA_SQLITE_FILE_PATH
 
 
 class AreaSpider51:
     """This crawler is crawled based on the API."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Init the url param."""
         self.url = "https://js.51jobcdn.com/in/js/h5/dd/d_jobarea.js"
         self.user_agent = UserAgent().random
@@ -21,10 +21,10 @@ class AreaSpider51:
             "User-Agent": self.user_agent,
         }
 
-    def get_data_list(self):
+    def get_data_list(self) -> list:
         """Get area list data."""
         try:
-            response = requests.get(self.url, headers=self.headers)
+            response = requests.get(self.url, headers=self.headers, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
             logger.error(f"Failed to get data: {e}")
@@ -35,24 +35,23 @@ class AreaSpider51:
         hotcity_end = data.find("]", hotcity_start)
         hotcity = data[hotcity_start : hotcity_end + 1]
 
-        allProvince_start = data.find("allProvince") + 12
-        allProvince_end = data.find("]", allProvince_start)
-        allProvince = data[allProvince_start : allProvince_end + 1]
+        all_province_start = data.find("allProvince") + 12
+        all_province_end = data.find("]", all_province_start)
+        all_province = data[all_province_start : all_province_end + 1]
 
-        combined_data = (hotcity + allProvince).replace("][", ",")
+        combined_data = (hotcity + all_province).replace("][", ",")
         pattern = r'{k:"(.*?)",v:"(.*?)"}'
-        areaTupleList = re.findall(pattern, combined_data)
-        return areaTupleList
+        return re.findall(pattern, combined_data)
 
-    def save(self, data: list):
+    def save(self, data: list) -> None:
         """Save functions through different types of mappings."""
-        self.save_to_db(data, SQLITE_FILE_PATH)
+        self.save_to_db(data, AREA_SQLITE_FILE_PATH)
 
-    def save_to_db(self, data: list, output: str):
+    def save_to_db(self, data: list, output: str) -> None:
         """Save list data to sqlite."""
-        sqlClean = """DROP TABLE IF EXISTS `area51`;"""
+        sql_clean = """DROP TABLE IF EXISTS `area51`;"""
 
-        sqlTable = """CREATE TABLE IF NOT EXISTS `area51` (
+        sql_table = """CREATE TABLE IF NOT EXISTS `area51` (
                   `code` VARCHAR(10) NOT NULL,
                   `area` VARCHAR(10) NOT NULL,
                   PRIMARY KEY (`code`)
@@ -63,15 +62,15 @@ class AreaSpider51:
         try:
             with sqlite3.connect(output) as connect:
                 cursor = connect.cursor()
-                cursor.execute(sqlClean)
-                cursor.execute(sqlTable)
+                cursor.execute(sql_clean)
+                cursor.execute(sql_table)
                 cursor.executemany(sql, data)
                 connect.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             logger.warning("SQL execution failure of SQLite: " + str(e))
 
 
-def start():
+def start() -> None:
     """Spider starter."""
     spider = AreaSpider51()
     data = spider.get_data_list()
@@ -80,5 +79,5 @@ def start():
         logger.warning("No data to save")
         return
 
-    logger.info(f"Saving {len(data)} items to {SQLITE_FILE_PATH}")
+    logger.info(f"Saving {len(data)} items to {AREA_SQLITE_FILE_PATH}")
     spider.save(data)

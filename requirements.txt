@@ -6,4 +6,4 @@ selenium==4.15.2
 requests==2.31.0
 webdriver-manager==4.0.1
 ruff
-
+pre-commit

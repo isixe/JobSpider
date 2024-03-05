@@ -10,3 +10,4 @@ dependencies:
   - selenium==4.15.2
   - python==3.10.6
   - ruff
+  - pre-commit

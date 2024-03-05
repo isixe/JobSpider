@@ -1,8 +1,9 @@
 """Customized log handler."""
+
 import logging
-import os
 import sys
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 import colorlog
 
@@ -13,7 +14,7 @@ class HandlerLogger:
     The main functions include console log highlightingand output formatting.
     """
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str) -> None:
         """Initialize the HandlerLogger class.
 
         :param filename: The log file prefix name.
@@ -27,21 +28,17 @@ class HandlerLogger:
         self.__set_log_handler(self.log_handler)
         self.__set_console_handler(self.console_handler)
 
-    def __set_log(self):
+    def __set_log(self) -> None:
         """Set logging configuration."""
         self.logger.setLevel(logging.DEBUG)
 
-    def __set_log_handler(self, log_handler: RotatingFileHandler):
-        """Set log file logging handler.
-
-        :Arg:
-         - log_handler: log file logging handler
-        """
+    def __set_log_handler(self, log_handler: RotatingFileHandler) -> None:
+        """Set log file logging handler."""
         log_handler.setLevel(logging.INFO)
         log_handler.setFormatter(self.formatter)
         self.logger.addHandler(log_handler)
 
-    def __set_console_handler(self, console_handler: logging.StreamHandler):
+    def __set_console_handler(self, console_handler: logging.StreamHandler) -> None:
         """Set console logging handler.
 
         :Arg:
@@ -52,48 +49,41 @@ class HandlerLogger:
         self.logger.addHandler(console_handler)
 
     @staticmethod
-    def __init_handler(filename: str):
-        """Init log file logging handler.
-
-        :Arg:
-         - filename: log file prefix name
-        """
-        current_dir = os.path.dirname(__file__)
-        abs_dir = os.path.join(current_dir, filename)
-        handler = RotatingFileHandler(
+    def __init_handler(filename: str) -> RotatingFileHandler:
+        """Init log file logging handler."""
+        current_dir = Path(__file__).parent
+        abs_dir = current_dir / filename
+        return RotatingFileHandler(
             filename=abs_dir,
             maxBytes=1024 * 1024,
             encoding="utf-8",
             backupCount=3,
         )
-        return handler
 
     @staticmethod
-    def __init_console_handler():
+    def __init_console_handler() -> logging.StreamHandler:
         """Init console logging handler."""
-        console_handler = colorlog.StreamHandler(sys.stdout)
-        return console_handler
+        return colorlog.StreamHandler(sys.stdout)
 
     @staticmethod
-    def __init_formatter():
+    def __init_formatter() -> logging.Formatter:
         """Init log file formatter."""
-        LOG_FORMAT = "%(asctime)s [ %(levelname)s ]: %(message)s"
-        DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
-        formater = logging.Formatter(LOG_FORMAT, DATE_FORMAT)
-        return formater
+        log_format = "%(asctime)s [ %(levelname)s ]: %(message)s"
+        date_format = "%m/%d/%Y %H:%M:%S %p"
+        return logging.Formatter(log_format, date_format)
 
     @staticmethod
-    def __init_color_formatter():
+    def __init_color_formatter() -> colorlog.ColoredFormatter:
         """Init console color formatter."""
-        LOG_FORMAT = (
-            "%(log_color)s%(asctime)s %(log_color)s[ %(levelname)s%(reset)s%(log_color)s ]"
-            "%(reset)s%(log_color)s: %(message)s"
+        log_format = (
+            "%(log_color)s%(asctime)s %(log_color)s[ %(levelname)s%(reset)s"
+            "%(log_color)s ]%(reset)s%(log_color)s: %(message)s"
         )
-        DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+        date_format = "%m/%d/%Y %H:%M:%S %p"
 
-        color_formatter = colorlog.ColoredFormatter(
-            LOG_FORMAT,
-            datefmt=DATE_FORMAT,
+        return colorlog.ColoredFormatter(
+            log_format,
+            datefmt=date_format,
             log_colors={
                 "DEBUG": "cyan",
                 "INFO": "green",
@@ -102,9 +92,8 @@ class HandlerLogger:
                 "CRITICAL": "bold_red",
             },
         )
-        return color_formatter
 
-    def debug(self, message):
+    def debug(self, message: str) -> None:
         """Log msg with severity 'DEBUG'.
 
         :Arg
@@ -112,7 +101,7 @@ class HandlerLogger:
         """
         self.logger.debug(message)
 
-    def info(self, message):
+    def info(self, message: str) -> None:
         """Log msg with severity 'INFO'.
 
         :Arg
@@ -120,7 +109,7 @@ class HandlerLogger:
         """
         self.logger.info(message)
 
-    def warning(self, message):
+    def warning(self, message: str) -> None:
         """Log msg with severity 'WARNING'.
 
         :Arg
@@ -128,7 +117,7 @@ class HandlerLogger:
         """
         self.logger.warning(message)
 
-    def error(self, message):
+    def error(self, message: str) -> None:
         """Log msg with severity 'ERROR'.
 
         :Arg
@@ -136,7 +125,7 @@ class HandlerLogger:
         """
         self.logger.error(message)
 
-    def critical(self, message):
+    def critical(self, message: str) -> None:
         """Log msg with severity 'CRITICAL'.
 
         :Arg
@@ -144,6 +133,6 @@ class HandlerLogger:
         """
         self.logger.critical(message)
 
-    def close(self):
+    def close(self) -> None:
         """Logger close."""
         self.logger.disabled = True

@@ -1,5 +1,6 @@
 # Used for testing the Chrome browser with selenium
-# If you not install webdriver, this script will install it automatically by webdriver_manager
+# If you not install webdriver,
+# this script will install it automatically by webdriver_manager
 
 # Notice that, ipv6 will cause some error, diable it if you have.
 from fake_useragent import UserAgent
@@ -18,15 +19,15 @@ options.add_experimental_option(
     ["enable-automation", "enable-logging"],
 )
 options.add_argument("--disable-blink-features=AutomationControlled")
-options.add_experimental_option("useAutomationExtension", False)
+options.add_experimental_option("useAutomationExtension", value=False)
 options.add_argument(f"user-agent={UserAgent().random}")
 driver = webdriver.Chrome(
-    service=ChromeService(ChromeDriverManager().install()), options=options
+    service=ChromeService(ChromeDriverManager().install()),
+    options=options,
 )
 
 script = 'Object.defineProperty(navigator, "webdriver", {get: () => false,});'
 driver.execute_script(script)
 
 driver.get("https://www.baidu.com")
-print(driver.title)
 driver.quit()  # quit to close all open windows
