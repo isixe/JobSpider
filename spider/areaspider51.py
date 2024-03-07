@@ -7,7 +7,7 @@ import requests
 from fake_useragent import UserAgent
 
 from spider import logger
-from spider.config import AREA_SQLITE_FILE_PATH
+from spider.config import AREA51_SQLITE_FILE_PATH, PLAT_CODE, get_legacy_session
 
 
 class AreaSpider51:
@@ -24,7 +24,14 @@ class AreaSpider51:
     def get_data_list(self) -> list:
         """Get area list data."""
         try:
-            response = requests.get(self.url, headers=self.headers, timeout=10)
+            # if in wsl/windows, should use `get_legacy_session()`
+            # else use `requests.get()`
+            if PLAT_CODE == 0:
+                response = get_legacy_session().get(
+                    self.url, headers=self.headers, timeout=10
+                )
+            elif PLAT_CODE == 1:
+                response = requests.get(self.url, headers=self.headers, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
             logger.error(f"Failed to get data: {e}")
@@ -45,7 +52,7 @@ class AreaSpider51:
 
     def save(self, data: list) -> None:
         """Save functions through different types of mappings."""
-        self.save_to_db(data, AREA_SQLITE_FILE_PATH)
+        self.save_to_db(data, AREA51_SQLITE_FILE_PATH)
 
     def save_to_db(self, data: list, output: str) -> None:
         """Save list data to sqlite."""
@@ -79,5 +86,5 @@ def start() -> None:
         logger.warning("No data to save")
         return
 
-    logger.info(f"Saving {len(data)} items to {AREA_SQLITE_FILE_PATH}")
+    logger.info(f"Saving {len(data)} items to {AREA51_SQLITE_FILE_PATH}")
     spider.save(data)

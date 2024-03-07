@@ -3,5 +3,5 @@ repos:
   rev: v0.3.0
   hooks:
   - id: ruff
-    args: [--fix]
+    args: [--exit-non-zero-on-fix, --fix]
   - id: ruff-format

@@ -3,159 +3,94 @@
 import json
 import random
 import re
-import sqlite3
 import time
 import urllib.parse
 
 from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
-from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver import ActionChains
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from spider import logger
 from spider.config import (
-    CHROMESERVICEPATH,
     FIREWALL_MESSAGE,
     HEIGHT_FACTOR,
-    JOB_SQLITE_FILE_PATH,
+    JOB51_SLIDER_XPATH,
+    JOB51_SQLITE_FILE_PATH,
     MAX_CLICKS,
-    MAX_PAUSE,
     MAX_RETRIES,
-    MAX_SLEEP,
     MIN_CLICKS,
-    MIN_PAUSE,
-    MIN_SLEEP,
     MOVE_DISTANCE,
     MOVE_VARIANCE,
-    PROXY_GROUP,
-    SLIDER_XPATH,
     STEPS,
     WAIT_TIME,
     WIDTH_FACTOR,
+    build_driver,
+    execute_sql_command,
+    random_paruse,
+    random_sleep,
 )
 
 
 class JobSipder51:
     """This crawler is crawled based on the API."""
 
+    driver: WebDriver
+    url: str
+
     def __init__(self, keyword: str, page: int, area: str) -> None:
         """Init the url param."""
-        self.keyword = keyword
-        self.page = page
-        self.area = area
-        self.timestamp = str(int(time.time()))
-        self.baseUrl = "https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId="
-        self.fakeUrl = "&jobArea2=&jobType=&salary=&workYear=&degree=&companyType="
-        "&companySize=&issueDate="
+        self.url = self._build_url(keyword, page, area)
+        self.driver = build_driver(headless=True)
 
-    def _build_driver(self) -> webdriver:
-        """Init webdriver.
-
-        During the building process,
-        it is necessary to set up an anti crawler detection strategy by Option.
-
-            .add_argument('--no-sandbox')
-            -> Disable sandbox mode
-
-            .add_argument('headless')
-            -> Set headless page, run silently
-
-            .add_argument('--disable-dev-shm-usage')
-            -> Disable shared memory
-
-            .add_argument("--window-size=1920,1080")
-            -> In headless status, browse without a window size,
-                so if the size of the window is not specified,
-            sliding verification may fail
-
-            .add_experimental_option('excludeSwitches',['enable-automation','enable-logging'])
-            -> Disable auto control and log feature of the browser
-
-            .add_argument('--disable-blink-features=AutomationControlled')
-            -> Disable auto control extension of the browser
-
-            .add_argument(("useAutomationExtension", False))
-            -> Disable auto control extension of the browser
-
-            .add_argument(f'user-agent={user_agent}')
-            -> Add random UA
-
-        Additionally, if use the visible window execution,
-        you need to add the following operations
-
-            .add_argument('--inprivate')
-            -> Start by Private Browsing
-
-            .add_argument("--start-maximized")
-            -> Maximize the window
-
-        Finally, inject script to change navigator = false to avoid detection.
-        """
-        user_agent = UserAgent().random
-        service = ChromeService(CHROMESERVICEPATH)
-
-        options = Options()
-        options.add_argument("--no-sandbox")
-        options.add_argument("--headless")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--window-size=1920,1080")
-        options.add_experimental_option(
-            "excludeSwitches",
-            ["enable-automation", "enable-logging"],
-        )
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("useAutomationExtension", value=False)
-        options.add_argument(f"user-agent={user_agent}")
-        options.add_argument("--proxy-server=" + random.choice(PROXY_GROUP))
-
-        web = webdriver.Chrome(service=service, options=options)
-        web.execute_script(
-            'Object.defineProperty(navigator, "webdriver", {get: () => false,});',
-        )
-
-        logger.info("Building webdriver done")
-
-        return web
-
-    def _slider_verify(self, web: webdriver) -> None:
+    def _slider_verify(self) -> None:
         """Slider verification action."""
         try:
-            slider = WebDriverWait(web, WAIT_TIME).until(
-                EC.presence_of_element_located((By.XPATH, SLIDER_XPATH)),
+            slider = WebDriverWait(self.driver, WAIT_TIME).until(
+                EC.presence_of_element_located((By.XPATH, JOB51_SLIDER_XPATH)),
             )
         except TimeoutException:
             logger.warning("Slider not found")
             return
 
         # Add random clicks to simulate human behavior
+        self._random_click()
+        # Break down the movement into smaller steps
+        self._small_move(slider)
+
+    def _random_click(self) -> None:
+        """Add random clicks to simulate human behavior."""
         for _ in range(random.randint(MIN_CLICKS, MAX_CLICKS)):
             # "/WIDTH_FACTOR" and "/HEIGHT_FACTOR" to avoid out of range
-            x_offset = random.uniform(0, web.get_window_size()["width"] / WIDTH_FACTOR)
+            x_offset = random.uniform(
+                0, self.driver.get_window_size()["width"] / WIDTH_FACTOR
+            )
             y_offset = random.uniform(
                 0,
-                web.get_window_size()["height"] / HEIGHT_FACTOR,
+                self.driver.get_window_size()["height"] / HEIGHT_FACTOR,
             )
-            ActionChains(web).pause(
-                random.uniform(MIN_PAUSE, MAX_PAUSE),
-            ).move_by_offset(x_offset, y_offset).click().perform()
+            ActionChains(self.driver).pause(random_paruse()).move_by_offset(
+                x_offset, y_offset
+            ).click().perform()
 
-        # Break down the movement into smaller steps
-        action_chains = ActionChains(web).move_to_element(slider).click_and_hold()
+    def _small_move(self, slider: WebElement) -> None:
+        """Break down the movement into smaller steps."""
+        action_chains = (
+            ActionChains(self.driver).move_to_element(slider).click_and_hold()
+        )
         for _ in range(STEPS):
             action_chains.move_by_offset(
                 MOVE_DISTANCE + random.uniform(0, MOVE_VARIANCE),
                 0,
             )
-            action_chains.pause(random.uniform(MIN_PAUSE, MAX_PAUSE))
+            action_chains.pause(random_paruse())
         action_chains.release().perform()
 
-    def _create_table(self, output: str) -> None:
+    def _create_table(self) -> None:
         """Create table if not exists."""
         sql_table = """CREATE TABLE IF NOT EXISTS `job51` (
                   `jobName` VARCHAR(255) NOT NULL,
@@ -172,15 +107,9 @@ class JobSipder51:
                   PRIMARY KEY (`jobName`,`area`,`companyName`,`issueDate`)
         );"""
 
-        try:
-            with sqlite3.connect(output) as connect:
-                cursor = connect.cursor()
-                cursor.execute(sql_table)
-                connect.commit()
-        except sqlite3.Error as e:
-            logger.warning("Failed to create table in SQLite: " + str(e))
+        execute_sql_command(sql_table, JOB51_SQLITE_FILE_PATH)
 
-    def _insert_to_db(self, detail: dict, output: str) -> None:
+    def _insert_to_db(self, detail: dict) -> None:
         """Insert data to SQLite."""
         sql = """INSERT INTO `job51` VALUES(
             :jobName,
@@ -196,20 +125,14 @@ class JobSipder51:
             :issueDate
         );"""
 
-        try:
-            with sqlite3.connect(output) as connect:
-                cursor = connect.cursor()
-                cursor.execute(sql, detail)
-                connect.commit()
-        except sqlite3.Error as e:
-            logger.warning("SQL execution failure of SQLite: " + str(e))
+        execute_sql_command(sql, JOB51_SQLITE_FILE_PATH, detail)
 
     def save(self, items: json) -> None:
         """Iterate through the dictionary to get each item."""
         if items is None:
             return
 
-        self._create_table(JOB_SQLITE_FILE_PATH)
+        self._create_table()
 
         for _key, item in enumerate(items):
             if "jobAreaLevelDetail" not in item:
@@ -230,18 +153,21 @@ class JobSipder51:
                 "logo": item["companyLogo"],
                 "issueDate": item["issueDateString"],
             }
-            logger.info(f"Saving: {job_detail_dict}")
-            self._insert_to_db(job_detail_dict, JOB_SQLITE_FILE_PATH)
 
-    def _build_url(self) -> str:
+            self._insert_to_db(job_detail_dict)
+
+    def _build_url(self, keyword: str, page: int, area: str) -> str:
         """Build the URL for the job search API."""
-        base_url = urllib.parse.urlparse(self.baseUrl)
+        timestamp = str(int(time.time()))
+        base_url = urllib.parse.urlparse(
+            "https://we.51job.com/api/job/search-pc?api_key=51job&searchType=2&pageCode=sou%7Csou%7Csoulb&sortType=0&function=&industry=&landmark=&metro=&requestId=&source=1&accountId="
+        )
 
         extra_query_params = {
-            "timestamp": self.timestamp,
-            "keyword": self.keyword,
-            "pageNum": self.page,
-            "jobArea": self.area,
+            "timestamp": timestamp,
+            "keyword": keyword,
+            "pageNum": page,
+            "jobArea": area,
         }
 
         # fake to aviod detection
@@ -280,16 +206,14 @@ class JobSipder51:
 
     def get_data_json(self) -> json:
         """Get the JSON data from the API."""
-        url = self._build_url()
-        web = self._build_driver()
         data_json = None
 
         try:
             for _ in range(MAX_RETRIES):
                 try:
-                    self._navigate_to_url(web, url)
-                    self._bypass_slider_verification(web)
-                    data_json = self._parse_html(web.page_source)
+                    self._navigate_to_url()
+                    self._bypass_slider_verification()
+                    data_json = self._parse_html()
                     if data_json is not None:  # success to get data page
                         break
                 except WebDriverException as e:
@@ -298,31 +222,32 @@ class JobSipder51:
             else:
                 logger.warning("Failed to get data after all retries")
         finally:
-            web.quit()  # to ensure the all browser is closed
+            self.driver.quit()  # to ensure the all browser is closed
 
         return data_json
 
-    def _navigate_to_url(self, web: webdriver, url: str) -> None:
+    def _navigate_to_url(self) -> None:
         """Navigate to the given URL."""
-        time.sleep(random.uniform(MIN_SLEEP, MAX_SLEEP))
-        web.get(url)
-        self._varify_firewall(web)
+        random_sleep()
+        self.driver.get(self.url)
+        self._varify_firewall()
 
-    def _varify_firewall(self, web: webdriver) -> None:
+    def _varify_firewall(self) -> None:
         """Check if the request was blocked by a firewall."""
-        soup = BeautifulSoup(web.page_source, "html.parser")
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
         if FIREWALL_MESSAGE in soup.text:
             msg = "Firewall detected"
             raise WebDriverException(msg)
 
-    def _bypass_slider_verification(self, web: webdriver) -> None:
+    def _bypass_slider_verification(self) -> None:
         """Pass the slider verification."""
         logger.info("Slider verification")
-        time.sleep(random.uniform(MIN_SLEEP, MAX_SLEEP))
-        self._slider_verify(web)
+        random_sleep()
+        self._slider_verify()
 
-    def _parse_html(self, html: str) -> json:
+    def _parse_html(self) -> json:
         """Parse the HTML content and return the job items."""
+        html = self.driver.page_source
         try:
             soup = BeautifulSoup(html, "html.parser")
             data = soup.find("body").text
@@ -352,5 +277,5 @@ def start(args: dict) -> None:
         logger.warning("No data to save")
         return
 
-    logger.info(f"Saving {len(data_json)} items to {JOB_SQLITE_FILE_PATH}")
+    logger.info(f"Saving {len(data_json)} items to {JOB51_SQLITE_FILE_PATH}")
     spider.save(data_json)
