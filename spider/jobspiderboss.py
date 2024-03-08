@@ -116,8 +116,9 @@ class JobSpiderBoss:
         self.city = city
         self.page = 1
 
-        self.driver = build_driver(headless=False)
-        LoginManager(self.driver).login()
+        self.driver = build_driver(headless=True)
+        # Not login, using other way to avoid the anti-crawler detection
+        # LoginManager(self.driver).login() # noqa: ERA001
 
     def start(self) -> None:
         """Crawl the job list."""

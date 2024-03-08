@@ -179,7 +179,7 @@ CHROME_SERVICE_PATH = ChromeDriverManager().install()
 
 # if in wsl/windows - code is 0, should use `get_legacy_session()`
 # else use `requests.get()` - code is 1
-PLAT_CODE = 0
+PLAT_CODE = 1
 
 if PLAT_CODE == 0:
     PROXY_GROUP = None
