@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from spider import areaspider51, areaspiderboss, jobspider51, jobspiderboss, logger
-from spider.config import (
+from spider.utility import (
     AREA51_SQLITE_FILE_PATH,
     AREABOSS_SQLITE_FILE_PATH,
     KEYWORD,

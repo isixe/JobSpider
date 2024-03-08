@@ -16,8 +16,8 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from spider import logger
-from spider.config import (
-    FIREWALL_MESSAGE,
+from spider.utility import (
+    FIREWALL51_MESSAGE,
     HEIGHT_FACTOR,
     JOB51_SLIDER_XPATH,
     JOB51_SQLITE_FILE_PATH,
@@ -235,7 +235,7 @@ class JobSipder51:
     def _varify_firewall(self) -> None:
         """Check if the request was blocked by a firewall."""
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
-        if FIREWALL_MESSAGE in soup.text:
+        if FIREWALL51_MESSAGE in soup.text:
             msg = "Firewall detected"
             raise WebDriverException(msg)
 

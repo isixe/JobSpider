@@ -2,7 +2,7 @@
 
 import requests
 
-from spider.config import AREABOSS_SQLITE_FILE_PATH, execute_sql_command
+from spider.utility import AREABOSS_SQLITE_FILE_PATH, execute_sql_command
 
 
 class AreaSpiderBoss:

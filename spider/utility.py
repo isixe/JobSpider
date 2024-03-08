@@ -126,7 +126,9 @@ def build_driver(*, headless: bool) -> webdriver:
     options.add_argument(f"user-agent={user_agent}")
 
     if PROXY_GROUP:  # local not use proxy
-        options.add_argument("--proxy-server=" + random.choice(PROXY_GROUP))
+        current_proxy = random.choice(PROXY_GROUP)
+        options.add_argument("--proxy-server=" + current_proxy)
+        logger.info(f"Using proxy {current_proxy}")
 
     driver = webdriver.Chrome(service=service, options=options)
     driver.execute_script(
@@ -179,7 +181,7 @@ CHROME_SERVICE_PATH = ChromeDriverManager().install()
 
 # if in wsl/windows - code is 0, should use `get_legacy_session()`
 # else use `requests.get()` - code is 1
-PLAT_CODE = 1
+PLAT_CODE = 0
 
 if PLAT_CODE == 0:
     PROXY_GROUP = None
@@ -188,9 +190,15 @@ elif PLAT_CODE == 1:
         "http://localhost:30001",
         "http://localhost:30002",
         "http://localhost:30003",
+        "http://localhost:30004",
+        "http://localhost:30005",
+        "http://localhost:30006",
+        "http://localhost:30007",
+        "http://localhost:30008",
+        "http://localhost:30009",
     ]
 
-FIREWALL_MESSAGE = "很抱歉，由于您访问的URL有可能对网站造成安全威胁，您的访问被阻断"  # noqa: RUF001
+FIREWALL51_MESSAGE = "很抱歉，由于您访问的URL有可能对网站造成安全威胁，您的访问被阻断"  # noqa: RUF001
 
 JOB51_SLIDER_XPATH = '//div[@class="nc_bg"]'
 WAIT_TIME = 10

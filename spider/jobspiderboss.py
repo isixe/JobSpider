@@ -13,10 +13,10 @@ from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.ui import WebDriverWait
 
 from spider import logger
-from spider.config import (
+from spider.utility import (
     BOSS_COOKIES_FILE_PATH,
     JOBOSS_SQLITE_FILE_PATH,
-    MAX_BOSSPAGE_NUM,
+    MAX_RETRIES,
     build_driver,
     execute_sql_command,
     random_sleep,
@@ -115,19 +115,24 @@ class JobSpiderBoss:
         self.keyword = keyword
         self.city = city
         self.page = 1
+        self.max_page = 10
 
-        self.driver = build_driver(headless=True)
-        # Not login, using other way to avoid the anti-crawler detection
-        # LoginManager(self.driver).login() # noqa: ERA001
+        self.driver = self._build_driver()
 
     def start(self) -> None:
         """Crawl the job list."""
         self._create_table()
-        while self.page < MAX_BOSSPAGE_NUM:
+        while self.page <= self.max_page:
             self.url = self._build_url(self.keyword, self.city)
             self._crwal_sigle_page()
             self.page += 1
         self.driver.quit()
+
+    def _build_driver(self) -> None:
+        """Build the driver."""
+        self.driver = build_driver(headless=False)
+        # Not login, using other way to avoid the anti-crawler detection
+        # LoginManager(self.driver).login() # noqa: ERA001
 
     def _build_url(self, keyword: str, city: str) -> str:
         """Build the URL for the job search."""
@@ -136,20 +141,40 @@ class JobSpiderBoss:
             {"query": keyword, "city": city, "page": self.page}
         )
         url = f"{base_url}?{query_params}"
-        logger.info(f"Crawling {url}")
+        logger.info(f"Crawling {self.city} of page-{self.page}, {url}")
         return url
 
     def _crwal_sigle_page(self) -> str:
         """Get the HTML from the URL."""
         random_sleep()
         try:
-            self.driver.get(self.url)
-            job_list = WebDriverWait(self.driver, 60).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "job-list-box"))
-            )
-        except TimeoutException:
-            logger.error("TimeoutException of getting job list.")
-            return
+            for _ in range(MAX_RETRIES):
+                try:
+                    self.driver.get(self.url)
+
+                    job_list = WebDriverWait(self.driver, 60).until(
+                        EC.presence_of_element_located((By.CLASS_NAME, "job-list-box"))
+                    )
+
+                    max_page = int(
+                        self.driver.find_elements(By.CLASS_NAME, "options-pages")[
+                            0
+                        ].text[-1]
+                    )
+                    if max_page == 0:
+                        self.max_page = 10
+                    else:
+                        self.max_page = int(max_page)
+                    break
+
+                except TimeoutException:
+                    logger.error("TimeoutException of getting job list, retrying")
+                    self.driver = (
+                        self._build_driver()
+                    )  # rebuild driver, refreshing proxy to retry
+                    continue
+        finally:
+            self.driver.quit()
 
         self._parse_job_list(job_list.get_attribute("innerHTML"))
 
