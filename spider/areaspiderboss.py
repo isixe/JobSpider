@@ -2,7 +2,8 @@
 
 import requests
 
-from spider.utility import AREABOSS_SQLITE_FILE_PATH, execute_sql_command
+from utility.path import AREABOSS_SQLITE_FILE_PATH
+from utility.sql import execute_sql_command
 
 
 class AreaSpiderBoss:
@@ -35,8 +36,12 @@ class AreaSpiderBoss:
         sql = """
             INSERT INTO areaboss (name, code) VALUES (?, ?)
         """
-        for name, code in self._get_all_area_codes().items():
-            execute_sql_command(sql, AREABOSS_SQLITE_FILE_PATH, [name, code])
+        area = self._get_all_area_codes()
+        execute_sql_command(
+            sql,
+            AREABOSS_SQLITE_FILE_PATH,
+            [(name, code) for name, code in area.items()],  # noqa: C416
+        )
 
 
 def start() -> None:

@@ -11,3 +11,4 @@ dependencies:
   - python==3.10.6
   - ruff
   - pre-commit
+  - mypy

@@ -32,7 +32,7 @@ exclude = [
 line-length = 88
 indent-width = 4
 
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -42,6 +42,10 @@ ignore = [
     "D417",
     # Missing type annotation for {name} in method
     "ANN101",
+    # Missing type annotation for *{name}   
+    "ANN002",
+    # Missing type annotation for **{name}
+    "ANN003",
     # Standard pseudo-random generators are not suitable for cryptographic purposes
     "S311",
     # missing-trailing-comma
