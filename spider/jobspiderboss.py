@@ -491,7 +491,7 @@ async def _build_url_pool(keyword: str, city: str, max_page: int) -> None:
             "url": build_single_url(keyword, city, cur_page),
             "keyword": keyword,
             "area_code": city,
-            "visited": 0,
+            "visited": str(0),
             "cur_page": cur_page,
             "max_page": max_page,
         }
@@ -550,7 +550,9 @@ def _random_select_url() -> str:
     select_sql = """
     SELECT `url` FROM `joboss_url_pool` WHERE `visited` = 0 ORDER BY RANDOM() LIMIT 1;
     """
-    result = execute_sql_command(select_sql, JOBOSS_SQLITE_FILE_PATH)
+    result: list[tuple[str]] | None = execute_sql_command(
+        select_sql, JOBOSS_SQLITE_FILE_PATH
+    )
     if result:
         return result[0][0]
     return ""
@@ -599,4 +601,4 @@ async def crawl_many() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(crawl_many())
+    _random_select_url()

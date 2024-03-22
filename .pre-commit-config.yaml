@@ -5,3 +5,13 @@ repos:
   - id: ruff
     args: [--exit-non-zero-on-fix, --fix]
   - id: ruff-format
+
+- repo: local
+  hooks:
+  - id: mypy
+    # note: assumes python env is setup and activated
+    name: mypy
+    entry: mypy
+    language: system
+    pass_filenames: false
+    args: ["--ignore-missing-imports", "."]

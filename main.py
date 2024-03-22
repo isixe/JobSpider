@@ -46,7 +46,7 @@ def areaboss_spider() -> None:
     areaspiderboss.start()
 
 
-async def joboss_max_page_spider(areas: list[tuple]) -> None:
+async def joboss_max_page_spider(areas: list[tuple[str]]) -> None:
     """Get the max page of Joboss."""
     jobspiderboss.create_joboss_max_page_table()
 
@@ -64,7 +64,7 @@ async def joboss_max_page_spider(areas: list[tuple]) -> None:
         )
 
 
-async def joboss_read_areas() -> list[tuple]:
+async def joboss_read_areas() -> list[tuple[str]]:
     """Get areas from the database."""
     query = """SELECT `code`, `name` FROM `areaboss`;"""
     result = execute_sql_command(query, AREABOSS_SQLITE_FILE_PATH)

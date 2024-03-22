@@ -2,9 +2,10 @@
 
 import re
 import sqlite3
+from pathlib import Path
 
 import requests
-from fake_useragent import UserAgent
+from fake_useragent import UserAgent  # type: ignore[import-untyped]
 
 from spider import logger
 from utility.path import AREA51_SQLITE_FILE_PATH
@@ -22,7 +23,7 @@ class AreaSpider51:
             "User-Agent": self.user_agent,
         }
 
-    def get_data_list(self) -> list:
+    def get_data_list(self) -> list[str]:
         """Get area list data."""
         try:
             # if in wsl/windows, should use `get_legacy_session()`
@@ -51,11 +52,11 @@ class AreaSpider51:
         pattern = r'{k:"(.*?)",v:"(.*?)"}'
         return re.findall(pattern, combined_data)
 
-    def save(self, data: list) -> None:
+    def save(self, data: list[str]) -> None:
         """Save functions through different types of mappings."""
         self.save_to_db(data, AREA51_SQLITE_FILE_PATH)
 
-    def save_to_db(self, data: list, output: str) -> None:
+    def save_to_db(self, data: list[str], output: Path) -> None:
         """Save list data to sqlite."""
         sql_clean = """DROP TABLE IF EXISTS `area51`;"""
 
