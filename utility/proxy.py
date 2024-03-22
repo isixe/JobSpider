@@ -14,11 +14,12 @@ from typing import Any
 
 import requests
 import urllib3
+from requests.adapters import HTTPAdapter
 
 from spider import logger
 
 
-class CustomHttpAdapter(requests.adapters.HTTPAdapter):
+class CustomHttpAdapter(HTTPAdapter):
     """Transport adapter" that allows us to use custom ssl_context."""
 
     # ref: https://stackoverflow.com/a/73519818/16493978
@@ -124,6 +125,19 @@ class Proxy:
         self.proxies = [f"http://{ip}" for ip in response.text.split("\n")]
         logger.info(f"Get proxies: {self.proxies}")
 
+    def get_cur_ip(self) -> str:
+        """Get current ip."""
+        url = "https://dev.kdlapi.com/api/getmyip"
+        response = requests.get(
+            url,
+            params={
+                "secret_id": self.SECRET_ID,
+                "signature": self._read_secret_token(),
+            },
+            timeout=10,
+        )
+        logger.info(f"Current ip: {response.text}")
+
     def get(self) -> str:
         """Get a proxy ip."""
         if self.local and PLAT_CODE == 1:
@@ -184,3 +198,7 @@ PROXY_GROUP = [
     "http://localhost:30008",
     "http://localhost:30009",
 ]
+
+if __name__ == "__main__":
+    p = Proxy(local=False)
+    p.get_cur_ip()
