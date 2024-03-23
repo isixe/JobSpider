@@ -34,8 +34,8 @@ from utility.sql import (
 
 # Temp let them equal, means that in one instance,
 # only crawl one group of urls, only one time(except retry due to banned)
-NUM_FOR_SINGLE = 5
-MAX_RUNING_PAGES = 5
+NUM_FOR_SINGLE = 32
+MAX_RUNING_PAGES = 16
 
 
 # Boss limit 10 pages for each query
@@ -92,7 +92,7 @@ class JobSpiderBoss:
 
     async def _build_browser(self) -> Browser:
         return await self.async_play.chromium.launch(
-            headless=False,
+            headless=True,
             args=[
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
@@ -184,12 +184,12 @@ class JobSpiderBoss:
 
                 # wait and check if ip banned
                 with suppress(PlaywrightTimeoutError):
-                    await page.wait_for_load_state("networkidle", timeout=10000)
+                    await page.wait_for_load_state("networkidle", timeout=35000)
                 if await self._check_ip_banned(page):
                     return (page, True)
 
                 job_result = page.locator("div.search-job-result ul.job-list-box")
-                await job_result.wait_for(timeout=5000)
+                await job_result.wait_for(timeout=30000)
 
                 response: Response = await response_info.value
                 logger.info(str(response))
@@ -207,19 +207,29 @@ class JobSpiderBoss:
         return (page, True)
 
     async def _check_ip_banned(self, page: Page) -> bool:
+        # Note that, it will not catch all IP banned,
+        # the function is just for speed up sometimes
+        # If current IP is indeed banned, it finally will cause a PlaywrightTimeoutError
+        # and cought `get_cur_page()`
         try:
+            await asyncio.sleep(2)
             content = await page.content()
+            url = page.url
+            if any(
+                phrase in content
+                for phrase in [
+                    "您暂时无法继续访问~",
+                    "当前 IP 地址可能存在异常访问行为，完成验证后即可正常使用.",  # noqa: RUF001
+                ]
+            ):
+                logger.warning("IP banned, found banned phrase")
+                return True
+            if url.endswith("ka=pc"):
+                logger.warning("IP banned, URL ends with 'ka=pc'")
+                return True
         except PlaywrightError:
-            logger.warning("Failed to check ip banned, assume not banned")
+            logger.info("Failed to check ip banned, assume not banned")
             return False
-
-        banned_phrases = [
-            "您暂时无法继续访问~",
-            "当前 IP 地址可能存在异常访问行为，完成验证后即可正常使用.",  # noqa: RUF001
-        ]
-        if any(phrase in content for phrase in banned_phrases):
-            logger.warning("IP banned")
-            return True
         return False
 
     async def _query_job_list(self, page: Page) -> str:
@@ -273,9 +283,8 @@ class JobSpiderBoss:
                 url: None for url in urls
             }
 
-            # Note that there is
-            # not limit the max retries here,
-            # assume that changing IP always works
+            # Note that there is not limit the max retries here,
+            # assuming that changing IP always works
             while not all(
                 content and content.result() for content in url_to_content.values()
             ):
@@ -362,7 +371,7 @@ class JobSpiderBoss:
     def _insert_job_to_db(self, jobs: list) -> None:
         """Insert the data into the database."""
         sql = """
-        INSERT INTO `joboss` (
+        INSERT OR IGNORE INTO `joboss` (
             `job_name`,
             `area`,
             `salary`,
