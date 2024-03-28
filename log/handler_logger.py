@@ -13,14 +13,16 @@ __all__ = ["HandlerLogger"]
 class HandlerLogger:
     """Customized log handler."""
 
-    def __init__(self, filename: str) -> None:
+    def __init__(
+        self, filename: str, *, log_terminal: bool = True, log_file: bool = False
+    ) -> None:
         """Initialize the log handler."""
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.NullHandler())
         self.formatter = self.__init_formatter()
         self.color_formatter = self.__init_color_formatter()
-        self.log_handler = self.__init_handler(filename=filename)
-        self.console_handler = self.__init_console_handler()
+        self.log_handler = self.__init_handler(filename=filename) if log_file else None
+        self.console_handler = self.__init_console_handler() if log_terminal else None
         self.__set_log()
         self.__set_log_handler(self.log_handler)
         self.__set_console_handler(self.console_handler)
@@ -28,15 +30,19 @@ class HandlerLogger:
     def __set_log(self) -> None:
         self.logger.setLevel(logging.DEBUG)
 
-    def __set_log_handler(self, log_handler: RotatingFileHandler) -> None:
-        log_handler.setLevel(logging.INFO)
-        log_handler.setFormatter(self.formatter)
-        self.logger.addHandler(log_handler)
+    def __set_log_handler(self, log_handler: RotatingFileHandler | None) -> None:
+        if log_handler is not None:
+            log_handler.setLevel(logging.INFO)
+            log_handler.setFormatter(self.formatter)
+            self.logger.addHandler(log_handler)
 
-    def __set_console_handler(self, console_handler: logging.StreamHandler) -> None:
-        console_handler.setLevel(logging.INFO)
-        console_handler.setFormatter(self.color_formatter)
-        self.logger.addHandler(console_handler)
+    def __set_console_handler(
+        self, console_handler: logging.StreamHandler | None
+    ) -> None:
+        if console_handler is not None:
+            console_handler.setLevel(logging.INFO)
+            console_handler.setFormatter(self.color_formatter)
+            self.logger.addHandler(console_handler)
 
     @staticmethod
     def __init_handler(filename: str) -> RotatingFileHandler:

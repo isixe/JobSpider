@@ -3,8 +3,8 @@
 WAIT_TIME = 10
 MAX_RETRIES = 5
 
-MAX_WAIT_TIME = 2
-MIN_WAIT_TIME = 1
+MAX_WAIT_TIME = 5
+MIN_WAIT_TIME = 2
 
 FIREWALL51_MESSAGE = "很抱歉，由于您访问的URL有可能对网站造成安全威胁，您的访问被阻断"  # noqa: RUF001
 JOB51_SLIDER_XPATH = '//div[@class="nc_bg"]'

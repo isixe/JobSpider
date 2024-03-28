@@ -5,9 +5,13 @@ repos:
   - id: ruff
     args: [--exit-non-zero-on-fix, --fix]
   - id: ruff-format
-
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.2.6
+  hooks:
+  - id: codespell
 - repo: local
   hooks:
+  # mypy is slow, so change it to manual when needed
   - id: mypy
     # note: assumes python env is setup and activated
     name: mypy

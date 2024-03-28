@@ -1,6 +1,6 @@
 """This is a file for using proxy from KuaiDaili.
 
-And dealing requests.get() invaild in windows sometimes.
+And dealing requests.get() invalid in windows sometimes.
 """
 
 import json
@@ -203,7 +203,3 @@ PROXY_GROUP = [  # proxy port of local
     "http://localhost:30008",
     "http://localhost:30009",
 ]
-
-if __name__ == "__main__":
-    p = Proxy(local=False)
-    p.get_cur_ip()

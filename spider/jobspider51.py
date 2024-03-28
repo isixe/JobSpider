@@ -159,7 +159,7 @@ class JobSipder51:
             "jobArea": area,
         }
 
-        # fake to aviod detection
+        # fake to avoid detection
         fake_query_params = {
             "jobArea2": "",
             "jobType": "",
