@@ -75,6 +75,7 @@ class Proxy:
             self.proxy = ""
 
     def _get_secret_token(self) -> tuple[str, str, str]:
+        logger.info("Getting secret token...")
         r = requests.post(
             url="https://auth.kdlapi.com/api/get_secret_token",
             data={"secret_id": self.secret_id, "secret_key": self.secret_key},
@@ -119,7 +120,7 @@ class Proxy:
     def _get_proxies(self) -> None:
         """Get a list of proxy ip."""
         api = "https://dps.kdlapi.com/api/getdps"
-        response = requests.get(
+        response = get_legacy_session().get(
             api,
             params={
                 "secret_id": self.secret_id,
