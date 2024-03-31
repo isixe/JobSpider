@@ -17,7 +17,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC  # noqa: N812
 from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager
 
 from spider import logger
 from utility.constant import (
@@ -388,7 +387,9 @@ def random_scroll(driver: webdriver.Chrome) -> None:
 
 MIN_SLEEP = 1
 MAX_SLEEP = 1.5
-CHROME_SERVICE_PATH = ChromeDriverManager().install()
+CHROME_SERVICE_PATH = (
+    ""  # TODO(luke396): need refactor to playwright # noqa: TD003, FIX002
+)
 
 MIN_CLICKS = 1
 MAX_CLICKS = 3
