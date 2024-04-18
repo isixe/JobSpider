@@ -12,3 +12,16 @@ dependencies:
   - ruff
   - pre-commit
   - mypy
+  
+  # for analysis
+  - polars
+  - ipython 
+  - ipykernel
+  - pandas
+  - xlsxwriter
+  - pyecharts
+  - snapshot-selenium
+  - mlxtend
+  - xlsx2csv
+  - wordcloud
+  - networkx

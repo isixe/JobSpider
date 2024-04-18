@@ -9,6 +9,8 @@ repos:
   rev: v2.2.6
   hooks:
   - id: codespell
+    types_or: [python, markdown]
+    additional_dependencies: [tomli]
 - repo: local
   hooks:
   # mypy is slow, so change it to manual when needed

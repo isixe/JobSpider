@@ -27,3 +27,7 @@ output/
 
 # token
 .secret 
+
+# Output data of analysis
+analysis/*.csv
+analysis/*.xlsx
