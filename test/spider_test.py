@@ -20,7 +20,7 @@ def part_spider():
     param = {
         "keyword": "Python",
         "page": 1,
-        "pageSize": 1000,
+        "pageSize": 200,
         "area": "000000"
     }
     jobspider51.start(args=param, save_engine='both')
@@ -45,7 +45,7 @@ def full_spider_csv(type: str):
         param = {
             "keyword": "Python",
             "page": 1,
-            "pageSize": 1000,
+            "pageSize": 200,
             "area": area
         }
         jobspider51.start(args=param, save_engine=type)
@@ -72,7 +72,7 @@ def full_spider_db(type: str):
         param = {
             "keyword": "Python",
             "page": 1,
-            "pageSize": 1000,
+            "pageSize": 200,
             "area": area[0]
         }
         jobspider51.start(args=param, save_engine=type)
