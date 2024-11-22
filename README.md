@@ -8,7 +8,7 @@ A Python basic program based on Selenium for crawling recruitment position infor
 - [ ] Boss zhipin
 
 > [!TIP]
-> Due to the limitation of 51job's API, the maximum number of entries obtained per search term is limited to 1000
+> Due to the limitation of 51job's API, the max page number of entries obtained per search term is limited to 200
 
 ## Environmental Requirement
 
