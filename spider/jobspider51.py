@@ -81,29 +81,31 @@ class JobSipder51(object):
             .add_argument(f'user-agent={user_agent}')
             -> Add random UA
 
-        Additionally, if use the visible window execution, you need to add the following operations
+            .add_argument("--start-maximized")
+            -> Maximize the browser on startup
 
             .add_argument('--inprivate')
             -> Start by Private Browsing
 
-            .add_argument("--start-maximized")
-            -> Maximize the window
+        Additionally, if use the visible window execution, you need to add the following operations
+
+            -> remove options.add_argument('headless')
 
         Finally, inject script to change navigator = false.
         """
         user_agent = UserAgent().random
 
         options = webdriver.EdgeOptions()
-        options.add_argument('headless')
-        options.add_argument("--window-size=1920,1080")
+
+        # TODO: slide failed issue
+        # options.add_argument('headless')
 
         options.add_experimental_option('excludeSwitches', ['enable-automation', 'enable-logging'])
         options.add_argument('--disable-blink-features=AutomationControlled')
         options.add_experimental_option('useAutomationExtension', False)
         options.add_argument(f'user-agent={user_agent}')
-
-        # options.add_argument('--inprivate')
-        # options.add_argument("--start-maximized")
+        options.add_argument("--start-maximized")
+        options.add_argument('--inprivate')
 
         web = webdriver.Edge(options=options)
 
@@ -283,6 +285,7 @@ class JobSipder51(object):
         while (count > 0):
             try:
                 time.sleep(random.uniform(5, 10))
+                print(url)
                 web.get(url)
 
                 time.sleep(random.uniform(1, 2))
